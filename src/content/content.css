@@ -547,6 +547,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 0;
   padding: 8px;
   border: 1px solid var(--ppt-line-strong);
   border-radius: 999px;
@@ -673,35 +674,37 @@
 }
 
 .ppt-anchor-actions {
-  position: absolute;
-  right: calc(100% + 10px);
-  top: 50%;
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--ppt-line-strong);
-  border-radius: 999px;
-  background: rgba(10, 16, 28, 0.92);
-  box-shadow: var(--ppt-shadow-soft);
-  backdrop-filter: blur(16px);
+  margin-right: 0;
+  padding-right: 0;
+  border-right: 0 solid transparent;
   max-width: 0;
   opacity: 0;
   overflow: hidden;
-  transform: translateY(-50%) translateX(4px) scale(0.98);
+  transform: translateX(4px) scale(0.98);
   pointer-events: none;
   white-space: nowrap;
   transition:
     max-width 240ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 140ms ease,
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin-right 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-right-width 180ms ease;
 }
 
 .ppt-toolbar--active .ppt-anchor-actions,
 .ppt-toolbar--review-open .ppt-anchor-actions {
   max-width: 160px;
   opacity: 1;
-  transform: translateY(-50%) translateX(0) scale(1);
+  margin-right: 8px;
+  padding-right: 8px;
+  border-right-width: 1px;
+  border-right-color: var(--ppt-line);
+  transform: translateX(0) scale(1);
   pointer-events: auto;
 }
 
@@ -867,10 +870,6 @@
 .ppt-theme-light .ppt-review-panel,
 .ppt-theme-light .ppt-popup {
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
-}
-
-.ppt-theme-light .ppt-anchor-actions {
-  background: rgba(255, 255, 255, 0.96);
 }
 
 .ppt-theme-light .ppt-list {

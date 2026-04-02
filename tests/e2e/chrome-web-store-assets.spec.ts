@@ -5,33 +5,10 @@ import path from 'node:path'
 let context: BrowserContext
 const demoUrl = 'https://example.com/'
 
-async function resolveExtensionId(context: BrowserContext): Promise<string> {
-  const [existingWorker] = context.serviceWorkers()
-  if (existingWorker) return existingWorker.url().split('/')[2]
-
-  const page = context.pages()[0] ?? await context.newPage()
-  const session = await context.newCDPSession(page)
-  const deadline = Date.now() + 15000
-
-  while (Date.now() < deadline) {
-    const { targetInfos } = await session.send('Target.getTargets')
-    const extensionTarget = targetInfos.find((target) =>
-      target.type === 'service_worker' &&
-      target.url.startsWith('chrome-extension://') &&
-      target.url.endsWith('/background.js')
-    )
-
-    if (extensionTarget) return extensionTarget.url.split('/')[2]
-    await page.waitForTimeout(250)
-  }
-
-  throw new Error('Timed out while resolving the extension ID from Chrome targets.')
-}
-
 test.beforeAll(async () => {
   const extensionPath = path.resolve(process.cwd(), 'dist')
   context = await chromium.launchPersistentContext('', {
-    channel: process.env.PINPOINT_BROWSER_CHANNEL ?? 'chrome',
+    channel: process.env.PINPOINT_BROWSER_CHANNEL ?? 'chromium',
     headless: false,
     viewport: { width: 1280, height: 800 },
     args: [
@@ -46,7 +23,12 @@ test.afterAll(async () => {
 })
 
 test('captures Chrome Web Store screenshots', async () => {
-  const extensionId = await resolveExtensionId(context)
+  let [serviceWorker] = context.serviceWorkers()
+  if (!serviceWorker) {
+    serviceWorker = await context.waitForEvent('serviceworker')
+  }
+
+  const extensionId = serviceWorker.url().split('/')[2]
   const outputDir = path.resolve(process.cwd(), 'artifacts', 'chrome-web-store', 'screenshots')
   await fs.mkdir(outputDir, { recursive: true })
 
@@ -72,8 +54,11 @@ test('captures Chrome Web Store screenshots', async () => {
   await expect(demoPage.locator('.ppt-popup-textarea')).toBeVisible()
   await demoPage.locator('.ppt-popup-textarea').fill('Tighten this CTA copy and add a stronger pressed state for accessibility.')
   await demoPage.getByRole('button', { name: 'Add' }).click()
-  await demoPage.getByRole('button', { name: 'Open review panel' }).click()
-  await expect(demoPage.getByRole('heading', { name: 'Pinpoint' })).toBeVisible()
+  await expect(demoPage.locator('.ppt-popup-textarea')).toBeHidden()
+  await demoPage
+    .getByRole('button', { name: 'Open review panel' })
+    .evaluate((element: HTMLButtonElement) => element.click())
+  await expect(demoPage.getByRole('heading', { name: 'Pinpoint', exact: true })).toBeVisible()
   await demoPage.screenshot({
     path: path.join(outputDir, 'pinpoint-annotating-page-1280x800.png'),
     fullPage: false,

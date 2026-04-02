@@ -87,6 +87,8 @@ Capture store screenshots:
 npm run cws:screenshots
 ```
 
+This uses Playwright's bundled `chromium` channel so the extension can be side-loaded reliably for screenshot capture.
+
 Core files for submission:
 
 - `docs/chrome-web-store/privacy-policy.md`
