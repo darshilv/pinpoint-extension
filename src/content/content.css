@@ -1,0 +1,201 @@
+/* === Overlay === */
+dialog.ppt-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+dialog.ppt-overlay::backdrop {
+  background: transparent;
+}
+
+.ppt-highlight {
+  position: fixed;
+  display: none;
+  border: 2px solid #0070d2;
+  border-radius: 3px;
+  background: rgba(0, 112, 210, 0.08);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+/* === Toolbar === */
+.ppt-toolbar {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 300px;
+  max-height: 80vh;
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 2147483646;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: #1a1a2e;
+  overflow: hidden;
+}
+
+.ppt-toolbar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e8edf3;
+  background: #f4f6f9;
+}
+
+.ppt-toolbar-title {
+  font-weight: 600;
+  flex: 1;
+}
+
+.ppt-tabs {
+  display: flex;
+  border-bottom: 1px solid #e8edf3;
+}
+
+.ppt-tab {
+  flex: 1;
+  padding: 8px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.ppt-tab--active {
+  color: #0070d2;
+  border-bottom-color: #0070d2;
+  font-weight: 500;
+}
+
+.ppt-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.ppt-annotation-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ppt-item-element {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 11px;
+  color: #0070d2;
+}
+
+.ppt-item-comment {
+  font-size: 12px;
+  color: #3e3e3c;
+  line-height: 1.4;
+}
+
+.ppt-item-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.ppt-empty {
+  padding: 16px 12px;
+  color: #888;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.ppt-toolbar button {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #d8dde6;
+  background: #fff;
+  cursor: pointer;
+  color: #1a1a2e;
+}
+
+.ppt-toolbar button:hover { background: #f4f6f9; }
+.ppt-toolbar button:disabled { opacity: 0.5; cursor: default; }
+.ppt-copy-all { background: #0070d2 !important; color: #fff !important; border-color: #0070d2 !important; }
+.ppt-copy-all:hover { background: #005fb2 !important; }
+
+/* === Popup === */
+.ppt-popup {
+  position: fixed;
+  width: 320px;
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  padding: 12px;
+}
+
+.ppt-popup-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid #d8dde6;
+  border-radius: 4px;
+  font-size: 13px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.ppt-popup-textarea:focus {
+  outline: none;
+  border-color: #0070d2;
+}
+
+.ppt-popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ppt-popup-cancel {
+  padding: 6px 14px;
+  border: 1px solid #d8dde6;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.ppt-popup-submit {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  background: #0070d2;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ppt-popup-submit:hover { background: #005fb2; }
