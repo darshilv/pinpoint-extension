@@ -63,7 +63,7 @@ describe('content coordinator', () => {
     expect(popupMock.show).toHaveBeenCalledWith(
       rect,
       { id: 'existing', feedback: 'old' },
-      { noteNumber: 1, surface, showsPageBadge: false },
+      { noteNumber: 1, selectorPath: 'div > button.a' },
     )
   })
 

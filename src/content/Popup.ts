@@ -1,5 +1,5 @@
 import { PPT_PREFIX, EVENTS } from './constants'
-import type { AnnotationRect, AnnotationSurface } from '../types'
+import type { AnnotationRect } from '../types'
 
 const POPUP_GAP = 12
 const POPUP_VIEWPORT_MARGIN = 12
@@ -17,10 +17,7 @@ export class Popup {
     this.#el.innerHTML = `
       <form class="${PPT_PREFIX}popup-form">
         <div class="${PPT_PREFIX}popup-header">
-          <div>
-            <p class="${PPT_PREFIX}popup-eyebrow">Pinpoint note</p>
-            <h3 class="${PPT_PREFIX}popup-title">Note 1</h3>
-          </div>
+          <p class="${PPT_PREFIX}popup-eyebrow">Pinpoint note</p>
           <button type="button" class="${PPT_PREFIX}popup-close" aria-label="Close note composer">×</button>
         </div>
         <p class="${PPT_PREFIX}popup-helper"></p>
@@ -60,20 +57,16 @@ export class Popup {
   show(
     rect: AnnotationRect,
     existing: { id: string; feedback: string } | null,
-    options: { noteNumber: number; surface: AnnotationSurface; showsPageBadge: boolean },
+    options: { noteNumber: number; selectorPath: string },
   ) {
     this.#existing = existing
     const textarea = this.#el!.querySelector<HTMLTextAreaElement>(`.${PPT_PREFIX}popup-textarea`)!
     const submitBtn = this.#el!.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-submit`)!
-    const title = this.#el!.querySelector<HTMLElement>(`.${PPT_PREFIX}popup-title`)!
     const helper = this.#el!.querySelector<HTMLElement>(`.${PPT_PREFIX}popup-helper`)!
 
     textarea.value = existing?.feedback ?? ''
     submitBtn.textContent = existing ? 'Update' : 'Add'
-    title.textContent = `Note ${options.noteNumber}`
-    helper.textContent = options.showsPageBadge
-      ? `This note will appear on the page as marker ${options.noteNumber}.`
-      : `This note is attached to ${options.surface.label.toLowerCase()}, so marker ${options.noteNumber} will appear in review only.`
+    helper.textContent = options.selectorPath
 
     this.#el!.style.cssText = 'display:block;position:fixed;top:0;left:0;visibility:hidden'
     const popupRect = this.#el!.getBoundingClientRect()

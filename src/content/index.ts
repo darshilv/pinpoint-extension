@@ -50,8 +50,7 @@ function handleElementClick(e: Event): void {
   overlay.freeze()
   popup.show(detail.rect, existing, {
     noteNumber,
-    surface: detail.surface,
-    showsPageBadge: detail.surface.kind !== 'dialog',
+    selectorPath: detail.path,
   })
 }
 

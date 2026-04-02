@@ -20,7 +20,7 @@ describe('Popup', () => {
       popup.show(
         { x: 100, y: 200, width: 50, height: 30 },
         null,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
       const el = document.querySelector(`.${PPT_PREFIX}popup`)
       expect(el.style.display).not.toBe('none')
@@ -30,7 +30,7 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         null,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
       const btn = document.querySelector(`.${PPT_PREFIX}popup-submit`)
       expect(btn.textContent).toBe('Add')
@@ -40,16 +40,15 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         { id: '1', feedback: 'Old feedback' },
-        { noteNumber: 2, surface: { kind: 'dialog', label: 'Dialog: Invite people' }, showsPageBadge: false },
+        { noteNumber: 2, selectorPath: 'main > dialog.modal > button.primary' },
       )
       const btn = document.querySelector(`.${PPT_PREFIX}popup-submit`)
       const textarea = document.querySelector(`.${PPT_PREFIX}popup-textarea`)
-      const title = document.querySelector(`.${PPT_PREFIX}popup-title`)
       const helper = document.querySelector(`.${PPT_PREFIX}popup-helper`)
       expect(btn.textContent).toBe('Update')
       expect(textarea.value).toBe('Old feedback')
-      expect(title.textContent).toBe('Note 2')
-      expect(helper.textContent).toContain('review only')
+      expect(document.querySelector(`.${PPT_PREFIX}popup-title`)).toBeNull()
+      expect(helper.textContent).toBe('main > dialog.modal > button.primary')
     })
 
     it('keeps the popup inside the viewport when near the bottom edge', () => {
@@ -61,7 +60,7 @@ describe('Popup', () => {
       popup.show(
         { x: 540, y: 430, width: 80, height: 24 },
         null,
-        { noteNumber: 3, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 3, selectorPath: 'section.hero > h1' },
       )
 
       expect(el.style.top).toBe('198px')
@@ -74,7 +73,7 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         null,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
       popup.hide()
       const el = document.querySelector(`.${PPT_PREFIX}popup`)
@@ -87,7 +86,7 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         null,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
 
       let received = null
@@ -107,7 +106,7 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         null,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
 
       let received = null
@@ -124,7 +123,7 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         existing,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
 
       let received = null
@@ -143,7 +142,7 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         null,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
       document.querySelector(`.${PPT_PREFIX}popup-cancel`).click()
       const el = document.querySelector(`.${PPT_PREFIX}popup`)
@@ -154,7 +153,7 @@ describe('Popup', () => {
       popup.show(
         { x: 0, y: 0, width: 0, height: 0 },
         null,
-        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+        { noteNumber: 1, selectorPath: 'section.hero > h1' },
       )
 
       let received = null

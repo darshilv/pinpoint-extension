@@ -853,7 +853,7 @@
 
 .ppt-popup-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
@@ -867,15 +867,14 @@
   letter-spacing: 0.08em;
 }
 
-.ppt-popup-title {
-  margin: 0;
-  color: var(--ppt-ink-strong);
-  font-size: 18px;
-  line-height: 1.2;
-}
-
 .ppt-popup-helper {
   margin: 10px 0 14px;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
   color: var(--ppt-ink-muted);
   font-size: 12px;
   line-height: 1.5;

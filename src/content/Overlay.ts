@@ -116,8 +116,12 @@ export class Overlay {
   }
 
   #handleMouseOver(e: MouseEvent): void {
-    if (!this.#selectionEnabled || this.#frozen) {
+    if (!this.#selectionEnabled) {
       this.#hideHighlight()
+      return
+    }
+    if (this.#frozen) {
+      if (this.#lockedRect) this.#showHighlight(this.#lockedRect)
       return
     }
     const path = e.composedPath()

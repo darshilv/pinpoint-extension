@@ -80,6 +80,19 @@ describe('Overlay', () => {
       expect(highlight.style.display).toBe('block')
       expect(highlight.style.top).toBe('18px')
     })
+
+    it('does not clear a locked highlight when the mouse moves while frozen', () => {
+      overlay.mount()
+      overlay.setSelectionEnabled(true)
+      overlay.setLockedHighlight({ x: 20, y: 24, width: 88, height: 32 })
+      overlay.freeze()
+
+      document.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+
+      const highlight = document.querySelector(`div.${PPT_PREFIX}highlight`)
+      expect(highlight.style.display).toBe('block')
+      expect(highlight.style.left).toBe('20px')
+    })
   })
 
   describe('annotation markers', () => {
