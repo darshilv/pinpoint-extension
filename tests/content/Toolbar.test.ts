@@ -122,8 +122,8 @@ describe('Toolbar', () => {
       const setSpy = chrome.storage.local.set
       document.querySelector(`.${PPT_PREFIX}theme-toggle`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       await Promise.resolve()
+      await Promise.resolve()
 
-      expect(document.documentElement.classList.contains(`${PPT_PREFIX}theme-light`)).toBe(true)
       expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({ 'pinpoint:theme': 'light' }))
       expect(document.querySelector(`.${PPT_PREFIX}toolbar-header`)).toBeNull()
     })

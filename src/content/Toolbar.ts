@@ -1,12 +1,11 @@
 import { PPT_PREFIX } from './constants'
-import { STORAGE_NAMESPACE } from '../constants'
 import { getAnnotations, saveAnnotations } from '../utils/storage'
 import { annotationsToMarkdown, annotationToMarkdown } from '../utils/markdown'
 import type { Annotation } from '../types'
 
 type ToolbarTheme = 'light' | 'dark'
 
-const THEME_STORAGE_KEY = `${STORAGE_NAMESPACE}:theme`
+const THEME_STORAGE_KEY = 'pinpoint:theme'
 
 export class Toolbar {
   #el: HTMLDivElement | null = null
@@ -23,12 +22,10 @@ export class Toolbar {
     this.#el = document.createElement('div')
     this.#el.className = `${PPT_PREFIX}toolbar`
     document.body.appendChild(this.#el)
-    this.#applyTheme()
     this.#render()
   }
 
   unmount() {
-    document.documentElement.classList.remove(`${PPT_PREFIX}theme-light`, `${PPT_PREFIX}theme-dark`)
     this.#el?.remove()
     this.#el = null
   }
@@ -97,7 +94,7 @@ export class Toolbar {
 
   #render(): void {
     if (!this.#el) return
-    this.#el.className = `${PPT_PREFIX}toolbar ${this.#expanded ? `${PPT_PREFIX}toolbar--expanded` : `${PPT_PREFIX}toolbar--collapsed`}`
+    this.#el.className = `${PPT_PREFIX}toolbar ${PPT_PREFIX}theme-${this.#theme} ${this.#expanded ? `${PPT_PREFIX}toolbar--expanded` : `${PPT_PREFIX}toolbar--collapsed`}`
     const active = this.#activeAnnotations()
     const resolved = this.#resolvedAnnotations()
     const total = this.#annotations.length
@@ -252,14 +249,8 @@ export class Toolbar {
     this.#render()
   }
 
-  #applyTheme(): void {
-    document.documentElement.classList.remove(`${PPT_PREFIX}theme-light`, `${PPT_PREFIX}theme-dark`)
-    document.documentElement.classList.add(`${PPT_PREFIX}theme-${this.#theme}`)
-  }
-
   async #toggleTheme(): Promise<void> {
     this.#theme = this.#theme === 'dark' ? 'light' : 'dark'
-    this.#applyTheme()
     await chrome.storage.local.set({ [THEME_STORAGE_KEY]: this.#theme })
     this.#render()
   }
