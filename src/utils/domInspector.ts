@@ -1,3 +1,5 @@
+import type { AnnotationSurface } from '../types'
+
 /**
  * Gets a CSS selector path for an element, crossing shadow DOM boundaries.
  */
@@ -47,4 +49,35 @@ export function getElementClasses(target: Element): string {
  */
 export function getNearbyText(element: Element): string {
   return (element.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120)
+}
+
+/**
+ * Describes the nearest meaningful surface that contains the annotated element.
+ */
+export function getAnnotationSurface(target: Element): AnnotationSurface {
+  const dialog = target.closest('dialog, [role="dialog"], [aria-modal="true"], [data-modal], [data-dialog]')
+  if (!dialog) {
+    return { kind: 'page', label: 'Page' }
+  }
+
+  const isNativeDialog = dialog.tagName.toLowerCase() === 'dialog'
+  const isRoleDialog = dialog.getAttribute('role') === 'dialog'
+  const isModal = dialog.getAttribute('aria-modal') === 'true'
+  const ariaLabel = dialog.getAttribute('aria-label')?.trim()
+  const labelledBy = dialog.getAttribute('aria-labelledby')?.trim()
+  const labelledEl = labelledBy ? dialog.ownerDocument.getElementById(labelledBy) : null
+  const heading = dialog.querySelector('h1, h2, h3, [role="heading"]')?.textContent?.trim()
+  const name = ariaLabel || labelledEl?.textContent?.trim() || heading
+
+  if (name) {
+    return {
+      kind: 'dialog',
+      label: `${isModal || isNativeDialog || isRoleDialog ? 'Dialog' : 'Panel'}: ${name.slice(0, 60)}`,
+    }
+  }
+
+  return {
+    kind: 'dialog',
+    label: isModal || isNativeDialog || isRoleDialog ? 'Dialog' : 'Overlay panel',
+  }
 }

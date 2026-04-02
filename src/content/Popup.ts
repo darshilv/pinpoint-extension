@@ -5,6 +5,7 @@ export class Popup {
   #el: HTMLDivElement | null = null
   #existing: { id: string; feedback: string } | null = null
   #onKeyDown: ((e: KeyboardEvent) => void) | null = null
+  #visible = false
 
   mount() {
     this.#el = document.createElement('div')
@@ -43,11 +44,11 @@ export class Popup {
       this.hide()
     })
 
-    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-cancel`)!.addEventListener('click', () => this.hide())
-    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-close`)!.addEventListener('click', () => this.hide())
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-cancel`)!.addEventListener('click', () => this.hide(true))
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-close`)!.addEventListener('click', () => this.hide(true))
 
     this.#onKeyDown = (e) => {
-      if (e.key === 'Escape' && this.#el?.style.display !== 'none') this.hide()
+      if (e.key === 'Escape' && this.#visible) this.hide(true)
       if ((e.key === 'Enter' && (e.metaKey || e.ctrlKey)) && this.#el?.style.display !== 'none') {
         this.#el?.querySelector<HTMLFormElement>(`.${PPT_PREFIX}popup-form`)?.dispatchEvent(new Event('submit'))
       }
@@ -66,14 +67,23 @@ export class Popup {
     const top = Math.min(rect.y + rect.height + 8, window.innerHeight - 220)
     const left = Math.min(rect.x, window.innerWidth - 340)
     this.#el!.style.cssText = `display:block;position:fixed;top:${top}px;left:${left}px`
+    this.#visible = true
 
     textarea.focus()
   }
 
-  hide() {
+  hide(emitCancel = false) {
     if (!this.#el) return
     this.#el.style.display = 'none'
     this.#existing = null
+    const wasVisible = this.#visible
+    this.#visible = false
+    if (emitCancel && wasVisible) {
+      document.dispatchEvent(new CustomEvent(EVENTS.ANNOTATION_CANCEL, {
+        bubbles: true,
+        composed: true,
+      }))
+    }
   }
 
   unmount() {

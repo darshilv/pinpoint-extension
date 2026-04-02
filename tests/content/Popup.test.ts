@@ -96,5 +96,16 @@ describe('Popup', () => {
       const el = document.querySelector(`.${PPT_PREFIX}popup`)
       expect(el.style.display).toBe('none')
     })
+
+    it('dispatches cancel event when popup is dismissed', () => {
+      popup.show({ x: 0, y: 0, width: 0, height: 0 }, null)
+
+      let received = null
+      document.addEventListener(EVENTS.ANNOTATION_CANCEL, (e) => { received = e }, { once: true })
+
+      document.querySelector(`.${PPT_PREFIX}popup-cancel`).click()
+
+      expect(received).not.toBeNull()
+    })
   })
 })

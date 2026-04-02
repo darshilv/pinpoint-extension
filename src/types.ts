@@ -1,4 +1,5 @@
 export type AnnotationStatus = 'active' | 'resolved'
+export type PinpointMode = 'inactive' | 'active-select' | 'active-review'
 
 export interface AnnotationRect {
   x: number
@@ -7,12 +8,18 @@ export interface AnnotationRect {
   height: number
 }
 
+export interface AnnotationSurface {
+  kind: 'dialog' | 'page'
+  label: string
+}
+
 export interface Annotation {
   id: string
   selector: string
   path: string
   classes: string[]
   context: string
+  surface?: AnnotationSurface
   feedback: string
   status: AnnotationStatus
   rect?: AnnotationRect
@@ -27,4 +34,5 @@ export interface ElementClickDetail {
   path: string
   classes: string[]
   context: string
+  surface: AnnotationSurface
 }

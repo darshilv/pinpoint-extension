@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { getElementPath, identifyElement, getElementClasses, getNearbyText } from '../../src/utils/domInspector'
+import { getAnnotationSurface, getElementPath, identifyElement, getElementClasses, getNearbyText } from '../../src/utils/domInspector'
 
 describe('getElementClasses', () => {
   it('returns space-separated class string', () => {
@@ -96,5 +96,42 @@ describe('identifyElement', () => {
     expect(name).toBe('button.primary')
     expect(path).toBe('button.primary')
     el.remove()
+  })
+})
+
+describe('getAnnotationSurface', () => {
+  it('returns page when no dialog-like container is present', () => {
+    const el = document.createElement('button')
+    document.body.appendChild(el)
+
+    expect(getAnnotationSurface(el)).toEqual({ kind: 'page', label: 'Page' })
+
+    el.remove()
+  })
+
+  it('returns dialog when inside a native dialog', () => {
+    const dialog = document.createElement('dialog')
+    const title = document.createElement('h2')
+    title.textContent = 'Invite people'
+    const btn = document.createElement('button')
+    dialog.append(title, btn)
+    document.body.appendChild(dialog)
+
+    expect(getAnnotationSurface(btn)).toEqual({ kind: 'dialog', label: 'Dialog: Invite people' })
+
+    dialog.remove()
+  })
+
+  it('uses aria-label for dialog-like containers', () => {
+    const panel = document.createElement('div')
+    panel.setAttribute('role', 'dialog')
+    panel.setAttribute('aria-label', 'Share link')
+    const btn = document.createElement('button')
+    panel.appendChild(btn)
+    document.body.appendChild(panel)
+
+    expect(getAnnotationSurface(btn)).toEqual({ kind: 'dialog', label: 'Dialog: Share link' })
+
+    panel.remove()
   })
 })

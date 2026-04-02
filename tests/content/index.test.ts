@@ -4,12 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const overlayMock = {
   mount: vi.fn(),
   unmount: vi.fn(),
+  setSelectionEnabled: vi.fn(),
   freeze: vi.fn(),
   unfreeze: vi.fn(),
 }
 const toolbarMock = {
   mount: vi.fn(async () => {}),
   unmount: vi.fn(),
+  setMode: vi.fn(),
   getAnnotationByPath: vi.fn(() => null),
   addAnnotation: vi.fn(async () => {}),
   updateAnnotation: vi.fn(async () => {}),
@@ -18,6 +20,7 @@ const popupMock = {
   mount: vi.fn(),
   unmount: vi.fn(),
   show: vi.fn(),
+  hide: vi.fn(),
 }
 
 vi.mock('../../src/content/Overlay', () => ({ Overlay: vi.fn(() => overlayMock) }))
@@ -38,21 +41,45 @@ describe('content coordinator', () => {
     toolbarMock.getAnnotationByPath.mockReturnValue({ id: 'existing', feedback: 'old' })
     await activate()
     const rect = { x: 1, y: 2, width: 3, height: 4 }
+    const surface = { kind: 'dialog', label: 'Dialog: Invite people' }
     document.dispatchEvent(new CustomEvent(EVENTS.ELEMENT_CLICK, {
-      detail: { selector: 'button.a', path: 'div > button.a', classes: ['a'], context: 'Save', rect },
+      detail: { selector: 'button.a', path: 'div > button.a', classes: ['a'], context: 'Save', rect, surface },
     }))
     expect(overlayMock.freeze).toHaveBeenCalled()
     expect(toolbarMock.getAnnotationByPath).toHaveBeenCalledWith('div > button.a')
     expect(popupMock.show).toHaveBeenCalledWith(rect, { id: 'existing', feedback: 'old' })
   })
 
+  it('starts in inactive mode on activation', async () => {
+    await activate()
+
+    expect(toolbarMock.setMode).toHaveBeenCalledWith('inactive')
+    expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(false)
+  })
+
   it('annotationadd with existingId calls updateAnnotation', async () => {
     await activate()
+    document.dispatchEvent(new CustomEvent(EVENTS.MODE_CHANGE, {
+      detail: { mode: 'active-select' },
+    }))
+    document.dispatchEvent(new CustomEvent(EVENTS.ELEMENT_CLICK, {
+      detail: {
+        selector: 'button.a',
+        path: 'div > button.a',
+        classes: ['a'],
+        context: 'Save',
+        surface: { kind: 'page', label: 'Page' },
+        rect: { x: 1, y: 2, width: 3, height: 4 },
+      },
+    }))
     document.dispatchEvent(new CustomEvent(EVENTS.ANNOTATION_ADD, {
       detail: { feedback: 'updated', existingId: 'abc' },
     }))
     await Promise.resolve()
+    await Promise.resolve()
     expect(toolbarMock.updateAnnotation).toHaveBeenCalledWith('abc', 'updated')
+    expect(toolbarMock.setMode).toHaveBeenLastCalledWith('active-select')
+    expect(overlayMock.setSelectionEnabled).toHaveBeenLastCalledWith(true)
     expect(overlayMock.unfreeze).toHaveBeenCalled()
   })
 
@@ -66,6 +93,7 @@ describe('content coordinator', () => {
         path: 'div > button.a',
         classes: ['a'],
         context: 'Save',
+        surface: { kind: 'page', label: 'Page' },
         rect: { x: 1, y: 2, width: 3, height: 4 },
       },
     }))
@@ -80,11 +108,31 @@ describe('content coordinator', () => {
         path: 'div > button.a',
         classes: ['a'],
         context: 'Save',
+        surface: { kind: 'page', label: 'Page' },
         feedback: 'new item',
         status: 'active',
         createdAt: 123,
       }),
     )
+  })
+
+  it('opens review mode when requested by the toolbar', async () => {
+    await activate()
+
+    document.dispatchEvent(new CustomEvent(EVENTS.OPEN_REVIEW))
+
+    expect(toolbarMock.setMode).toHaveBeenCalledWith('active-review')
+    expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(false)
+    expect(overlayMock.freeze).toHaveBeenCalled()
+  })
+
+  it('restores active-select mode when popup is cancelled', async () => {
+    await activate()
+
+    document.dispatchEvent(new CustomEvent(EVENTS.ANNOTATION_CANCEL))
+
+    expect(toolbarMock.setMode).toHaveBeenCalledWith('active-select')
+    expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(true)
   })
 
   it('deactivate removes listeners and unmounts components', async () => {

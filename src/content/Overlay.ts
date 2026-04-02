@@ -1,5 +1,5 @@
 import { PPT_PREFIX, EVENTS } from './constants'
-import { identifyElement, getElementClasses, getNearbyText } from '../utils/domInspector'
+import { identifyElement, getAnnotationSurface, getElementClasses, getNearbyText } from '../utils/domInspector'
 import type { ElementClickDetail } from '../types'
 
 function isAnnotatorElement(el: Element | null): boolean {
@@ -16,6 +16,8 @@ function isAnnotatorElement(el: Element | null): boolean {
 export class Overlay {
   #root: HTMLDivElement | null = null
   #highlight: HTMLDivElement | null = null
+  #selectionEnabled = false
+  #frozen = false
   #onMouseOver: ((e: MouseEvent) => void) | null = null
   #onClick: ((e: MouseEvent) => void) | null = null
   #onKeyDown: ((e: KeyboardEvent) => void) | null = null
@@ -29,8 +31,7 @@ export class Overlay {
     this.#root.appendChild(this.#highlight)
 
     document.body.appendChild(this.#root)
-    document.documentElement.style.cursor = 'crosshair'
-    document.body.style.cursor = 'crosshair'
+    this.#applyInteractivity()
 
     this.#onMouseOver = (e) => this.#handleMouseOver(e)
     this.#onClick = (e) => this.#handleClick(e)
@@ -55,12 +56,21 @@ export class Overlay {
     this.#highlight = null
   }
 
+  setSelectionEnabled(enabled: boolean) {
+    this.#selectionEnabled = enabled
+    this.#frozen = false
+    this.#applyInteractivity()
+    if (!enabled) this.#hideHighlight()
+  }
+
   freeze() {
-    if (this.#root) this.#root.style.pointerEvents = 'none'
+    this.#frozen = true
+    this.#applyInteractivity()
   }
 
   unfreeze() {
-    if (this.#root) this.#root.style.pointerEvents = ''
+    this.#frozen = false
+    this.#applyInteractivity()
   }
 
   // Test seam: allows tests to simulate a click on a specific element
@@ -69,6 +79,10 @@ export class Overlay {
   }
 
   #handleMouseOver(e: MouseEvent): void {
+    if (!this.#selectionEnabled || this.#frozen) {
+      this.#hideHighlight()
+      return
+    }
     const path = e.composedPath()
     const target = path.find((el): el is Element => el instanceof Element && !isAnnotatorElement(el))
     if (!target || target === document.body || target === document.documentElement) {
@@ -81,6 +95,7 @@ export class Overlay {
   }
 
   #handleClick(e: MouseEvent): void {
+    if (!this.#selectionEnabled || this.#frozen) return
     const path = e.composedPath()
     if (path.some((el) => el instanceof Element && isAnnotatorElement(el))) return
     const target = path.find((el): el is Element => el instanceof Element && !isAnnotatorElement(el))
@@ -91,11 +106,13 @@ export class Overlay {
   }
 
   #dispatchElementClick(target: Element): void {
+    if (!this.#selectionEnabled || this.#frozen) return
     if (isAnnotatorElement(target)) return
     const rect = target.getBoundingClientRect()
     const { name, path } = identifyElement(target)
     const classes = getElementClasses(target).split(' ').filter(Boolean)
     const context = getNearbyText(target)
+    const surface = getAnnotationSurface(target)
     const detail: ElementClickDetail = {
       element: target,
       rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
@@ -103,6 +120,7 @@ export class Overlay {
       path,
       classes,
       context,
+      surface,
     }
     document.dispatchEvent(new CustomEvent<ElementClickDetail>(EVENTS.ELEMENT_CLICK, {
       bubbles: true,
@@ -113,5 +131,13 @@ export class Overlay {
 
   #hideHighlight(): void {
     if (this.#highlight) this.#highlight.style.display = 'none'
+  }
+
+  #applyInteractivity(): void {
+    if (!this.#root) return
+    const canInteract = this.#selectionEnabled && !this.#frozen
+    this.#root.style.pointerEvents = canInteract ? '' : 'none'
+    document.documentElement.style.cursor = canInteract ? 'crosshair' : ''
+    document.body.style.cursor = canInteract ? 'crosshair' : ''
   }
 }

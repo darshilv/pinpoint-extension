@@ -6,6 +6,9 @@ export const PPT_PREFIX = 'ppt-'
 export const EVENTS = {
   ELEMENT_CLICK: 'pinpoint:elementclick',
   ANNOTATION_ADD: 'pinpoint:annotationadd',
+  ANNOTATION_CANCEL: 'pinpoint:annotationcancel',
+  MODE_CHANGE: 'pinpoint:modechange',
+  OPEN_REVIEW: 'pinpoint:openreview',
 } as const
 
 // chrome.storage keys
