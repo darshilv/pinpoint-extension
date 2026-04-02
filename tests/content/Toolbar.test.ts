@@ -70,15 +70,25 @@ describe('Toolbar', () => {
   })
 
   describe('resolve', () => {
-    it('moves annotation to resolved tab', async () => {
+    it('hides resolved annotation from the main list and shows a history action', async () => {
       const annotation = makeAnnotation()
       await toolbar.addAnnotation(annotation)
       await toolbar.resolve(annotation.id)
 
-      // Switch to resolved tab to see it
-      toolbar.setTab('resolved')
-      const items = document.querySelectorAll(`.${PPT_PREFIX}annotation-item`)
-      expect(items.length).toBe(1)
+      expect(document.querySelectorAll(`.${PPT_PREFIX}annotation-item`).length).toBe(0)
+      expect(document.querySelector(`.${PPT_PREFIX}history-toggle`)?.textContent).toContain('View history')
+    })
+
+    it('reveals resolved history on demand', async () => {
+      const annotation = makeAnnotation()
+      await toolbar.addAnnotation(annotation)
+      await toolbar.resolve(annotation.id)
+
+      document.querySelector(`.${PPT_PREFIX}history-toggle`).click()
+
+      const sections = Array.from(document.querySelectorAll(`.${PPT_PREFIX}section-title`)).map(el => el.textContent)
+      expect(sections).toContain('Resolved history')
+      expect(document.querySelectorAll(`.${PPT_PREFIX}annotation-item`).length).toBe(1)
     })
   })
 

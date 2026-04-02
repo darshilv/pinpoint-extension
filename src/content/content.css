@@ -143,50 +143,6 @@ dialog.ppt-overlay::backdrop {
   font-weight: 700;
 }
 
-.ppt-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--ppt-line);
-  background: #fbfcff;
-}
-
-.ppt-tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ppt-ink-muted);
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
-}
-
-.ppt-tab--active {
-  color: var(--ppt-brand-strong);
-  border-color: rgba(53, 120, 229, 0.14);
-  background: var(--ppt-brand-soft);
-}
-
-.ppt-tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  color: inherit;
-  font-size: 11px;
-}
-
 .ppt-list {
   list-style: none;
   padding: 12px;
@@ -194,6 +150,102 @@ dialog.ppt-overlay::backdrop {
   overflow-y: auto;
   flex: 1;
   background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.ppt-history-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(31, 143, 78, 0.14);
+  border-radius: var(--ppt-radius-md);
+  background: linear-gradient(135deg, rgba(31, 143, 78, 0.08) 0%, rgba(255, 255, 255, 0.96) 100%);
+}
+
+.ppt-history-toast-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ppt-history-toast-title {
+  color: var(--ppt-ink-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ppt-history-toast-body {
+  color: var(--ppt-ink-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ppt-history-toggle,
+.ppt-history-hide {
+  flex-shrink: 0;
+}
+
+.ppt-section + .ppt-section {
+  margin-top: 16px;
+}
+
+.ppt-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.ppt-section-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ppt-section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ppt-section-title {
+  color: var(--ppt-ink-strong);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ppt-section-subtitle {
+  color: var(--ppt-ink-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ppt-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--ppt-brand-soft);
+  color: var(--ppt-brand-strong);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ppt-section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .ppt-annotation-item {
@@ -235,6 +287,11 @@ dialog.ppt-overlay::backdrop {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.ppt-item-badge--resolved {
+  background: var(--ppt-success-soft);
+  color: var(--ppt-success);
 }
 
 .ppt-item-comment {

@@ -6,7 +6,8 @@ import type { Annotation } from '../types'
 export class Toolbar {
   #el: HTMLDivElement | null = null
   #annotations: Annotation[] = []
-  #tab: 'active' | 'resolved' = 'active'
+  #showResolvedHistory = false
+  #lastResolvedId: string | null = null
 
   async mount() {
     this.#annotations = await getAnnotations(window.location.pathname)
@@ -29,6 +30,7 @@ export class Toolbar {
 
   async addAnnotation(annotation: Annotation): Promise<void> {
     this.#annotations = [...this.#annotations, annotation]
+    this.#showResolvedHistory = false
     await saveAnnotations(window.location.pathname, this.#annotations)
     this.#render()
   }
@@ -45,12 +47,9 @@ export class Toolbar {
     this.#annotations = this.#annotations.map(a =>
       a.id === id ? { ...a, status: 'resolved' } : a
     )
+    this.#lastResolvedId = id
+    this.#showResolvedHistory = false
     await saveAnnotations(window.location.pathname, this.#annotations)
-    this.#render()
-  }
-
-  setTab(tab: 'active' | 'resolved'): void {
-    this.#tab = tab
     this.#render()
   }
 
@@ -87,13 +86,23 @@ export class Toolbar {
     if (!this.#el) return
     const active = this.#activeAnnotations()
     const resolved = this.#resolvedAnnotations()
-    const shown = this.#tab === 'active' ? active : resolved
     const total = this.#annotations.length
     const reviewLabel = active.length === 1 ? 'item to review' : 'items to review'
-    const emptyTitle = this.#tab === 'active' ? 'Start collecting feedback' : 'Nothing resolved yet'
-    const emptyBody = this.#tab === 'active'
-      ? 'Click any element on the page to pin a note, and your active requests will stack up here.'
-      : 'Resolved notes stay here as a lightweight audit trail once you mark them complete.'
+    const showResolvedToast = !this.#showResolvedHistory && resolved.length > 0 && this.#lastResolvedId !== null
+    const renderItems = (annotations: Annotation[]) => annotations.map(a => `
+      <li class="${PPT_PREFIX}annotation-item" data-id="${a.id}">
+        <div class="${PPT_PREFIX}item-meta">
+          <span class="${PPT_PREFIX}item-element">${a.selector}</span>
+          <span class="${PPT_PREFIX}item-badge ${a.status === 'resolved' ? `${PPT_PREFIX}item-badge--resolved` : ''}">${a.status === 'active' ? 'Open' : 'Done'}</span>
+        </div>
+        <span class="${PPT_PREFIX}item-comment">${a.feedback}</span>
+        <span class="${PPT_PREFIX}item-context">${a.context || a.path}</span>
+        <div class="${PPT_PREFIX}item-actions">
+          <button class="${PPT_PREFIX}copy-one" data-id="${a.id}">Copy</button>
+          ${a.status === 'active' ? `<button class="${PPT_PREFIX}resolve-one" data-id="${a.id}">Resolve</button>` : ''}
+        </div>
+      </li>
+    `).join('')
 
     this.#el.innerHTML = `
       <div class="${PPT_PREFIX}toolbar-header">
@@ -120,43 +129,63 @@ export class Toolbar {
           <span class="${PPT_PREFIX}summary-value">${total}</span>
         </div>
       </div>
-      <div class="${PPT_PREFIX}tabs">
-        <button class="${PPT_PREFIX}tab ${this.#tab === 'active' ? `${PPT_PREFIX}tab--active` : ''}" data-tab="active">
-          To tackle <span class="${PPT_PREFIX}tab-count">${active.length}</span>
-        </button>
-        <button class="${PPT_PREFIX}tab ${this.#tab === 'resolved' ? `${PPT_PREFIX}tab--active` : ''}" data-tab="resolved">
-          Resolved <span class="${PPT_PREFIX}tab-count">${resolved.length}</span>
-        </button>
-      </div>
       <ul class="${PPT_PREFIX}list">
-        ${shown.length === 0 ? `
-          <li class="${PPT_PREFIX}empty">
-            <div class="${PPT_PREFIX}empty-illustration"></div>
-            <h3 class="${PPT_PREFIX}empty-title">${emptyTitle}</h3>
-            <p class="${PPT_PREFIX}empty-body">${emptyBody}</p>
+        ${showResolvedToast ? `
+          <li class="${PPT_PREFIX}history-toast">
+            <div class="${PPT_PREFIX}history-toast-copy">
+              <span class="${PPT_PREFIX}history-toast-title">Marked resolved</span>
+              <span class="${PPT_PREFIX}history-toast-body">Completed notes are hidden to keep the workspace focused.</span>
+            </div>
+            <button class="${PPT_PREFIX}history-toggle" type="button">View history</button>
           </li>
         ` : ''}
-        ${shown.map(a => `
-          <li class="${PPT_PREFIX}annotation-item" data-id="${a.id}">
-            <div class="${PPT_PREFIX}item-meta">
-              <span class="${PPT_PREFIX}item-element">${a.selector}</span>
-              <span class="${PPT_PREFIX}item-badge">${a.status === 'active' ? 'Open' : 'Done'}</span>
-            </div>
-            <span class="${PPT_PREFIX}item-comment">${a.feedback}</span>
-            <span class="${PPT_PREFIX}item-context">${a.context || a.path}</span>
-            <div class="${PPT_PREFIX}item-actions">
-              <button class="${PPT_PREFIX}copy-one" data-id="${a.id}">Copy</button>
-              ${a.status === 'active' ? `<button class="${PPT_PREFIX}resolve-one" data-id="${a.id}">Resolve</button>` : ''}
-            </div>
+        ${active.length === 0 && resolved.length === 0 ? `
+          <li class="${PPT_PREFIX}empty">
+            <div class="${PPT_PREFIX}empty-illustration"></div>
+            <h3 class="${PPT_PREFIX}empty-title">Start collecting feedback</h3>
+            <p class="${PPT_PREFIX}empty-body">Click any element on the page to pin a note, and your active requests will stack up here.</p>
           </li>
-        `).join('')}
+        ` : ''}
+        ${active.length > 0 ? `
+          <li class="${PPT_PREFIX}section">
+            <div class="${PPT_PREFIX}section-header">
+              <span class="${PPT_PREFIX}section-title">To tackle</span>
+              <span class="${PPT_PREFIX}section-count">${active.length}</span>
+            </div>
+            <ul class="${PPT_PREFIX}section-list">
+              ${renderItems(active)}
+            </ul>
+          </li>
+        ` : ''}
+        ${this.#showResolvedHistory && resolved.length > 0 ? `
+          <li class="${PPT_PREFIX}section">
+            <div class="${PPT_PREFIX}section-header">
+              <div class="${PPT_PREFIX}section-header-copy">
+                <span class="${PPT_PREFIX}section-title">Resolved history</span>
+                <span class="${PPT_PREFIX}section-subtitle">A lightweight record of notes you already completed.</span>
+              </div>
+              <div class="${PPT_PREFIX}section-header-actions">
+                <span class="${PPT_PREFIX}section-count">${resolved.length}</span>
+                <button class="${PPT_PREFIX}history-hide" type="button">Hide</button>
+              </div>
+            </div>
+            <ul class="${PPT_PREFIX}section-list">
+              ${renderItems(resolved)}
+            </ul>
+          </li>
+        ` : ''}
       </ul>
     `
 
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}copy-all`)?.addEventListener('click', () => this.copyAll())
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}clear-active`)?.addEventListener('click', () => this.#clearActive())
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}tab`).forEach((btn) => {
-      btn.addEventListener('click', (e) => this.setTab((e.currentTarget as HTMLButtonElement).dataset.tab as 'active' | 'resolved'))
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}history-toggle`)?.addEventListener('click', () => {
+      this.#showResolvedHistory = true
+      this.#render()
+    })
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}history-hide`)?.addEventListener('click', () => {
+      this.#showResolvedHistory = false
+      this.#render()
     })
     this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}copy-one`).forEach((btn) => {
       btn.addEventListener('click', (e) => this.copyOne((e.currentTarget as HTMLButtonElement).dataset.id!))
@@ -168,6 +197,7 @@ export class Toolbar {
 
   async #clearActive(): Promise<void> {
     this.#annotations = this.#resolvedAnnotations()
+    this.#lastResolvedId = null
     await saveAnnotations(window.location.pathname, this.#annotations)
     this.#render()
   }
