@@ -10,6 +10,16 @@ let toolbar: Toolbar | null = null
 let popup: Popup | null = null
 let pendingElementData: Omit<Annotation, 'id' | 'feedback' | 'status' | 'createdAt'> | null = null
 let mode: PinpointMode = 'inactive'
+let onShortcutKeyDown: ((e: KeyboardEvent) => void) | null = null
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  )
+}
 
 function syncAnnotationMarkers(): void {
   if (!overlay || !toolbar) return
@@ -95,6 +105,16 @@ function handleAnnotationsChange(): void {
   syncAnnotationMarkers()
 }
 
+function handleShortcutKeyDown(e: KeyboardEvent): void {
+  if (!overlay || !toolbar || !popup) return
+  if (!e.altKey || e.metaKey || e.ctrlKey) return
+  if (e.key.toLowerCase() !== 'v') return
+  if (isEditableTarget(e.target)) return
+
+  e.preventDefault()
+  setMode('active-select')
+}
+
 export async function activate(): Promise<void> {
   if (overlay) return
   overlay = new Overlay()
@@ -105,12 +125,14 @@ export async function activate(): Promise<void> {
   popup.mount()
   syncAnnotationMarkers()
   setMode('inactive')
+  onShortcutKeyDown = (e) => handleShortcutKeyDown(e)
   document.addEventListener(EVENTS.ELEMENT_CLICK, handleElementClick as EventListener)
   document.addEventListener(EVENTS.ANNOTATION_ADD, handleAnnotationAdd as EventListener)
   document.addEventListener(EVENTS.ANNOTATION_CANCEL, handleAnnotationCancel as EventListener)
   document.addEventListener(EVENTS.ANNOTATIONS_CHANGE, handleAnnotationsChange as EventListener)
   document.addEventListener(EVENTS.MODE_CHANGE, handleModeChange as EventListener)
   document.addEventListener(EVENTS.OPEN_REVIEW, handleOpenReview as EventListener)
+  document.addEventListener('keydown', onShortcutKeyDown)
 }
 
 export function deactivate(): void {
@@ -121,6 +143,7 @@ export function deactivate(): void {
   document.removeEventListener(EVENTS.ANNOTATIONS_CHANGE, handleAnnotationsChange as EventListener)
   document.removeEventListener(EVENTS.MODE_CHANGE, handleModeChange as EventListener)
   document.removeEventListener(EVENTS.OPEN_REVIEW, handleOpenReview as EventListener)
+  if (onShortcutKeyDown) document.removeEventListener('keydown', onShortcutKeyDown)
   popup.hide()
   overlay.unmount()
   toolbar.unmount()
@@ -130,6 +153,7 @@ export function deactivate(): void {
   popup = null
   pendingElementData = null
   mode = 'inactive'
+  onShortcutKeyDown = null
 }
 
 chrome.runtime.onMessage.addListener((msg: { type?: string }) => {

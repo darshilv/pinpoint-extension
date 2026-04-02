@@ -32,14 +32,6 @@ describe('service worker', () => {
     expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(5, { type: MSG.DEACTIVATE })
   })
 
-  it('hotkey toggles active tab', async () => {
-    chrome.tabs.query.mockResolvedValue([{ id: 9 }])
-    const onCommand = chrome.commands.onCommand.addListener.mock.calls[0][0]
-    await onCommand('toggle-pinpoint')
-    expect(chrome.tabs.query).toHaveBeenCalledWith({ active: true, currentWindow: true })
-    expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: 'ON', tabId: 9 })
-  })
-
   it('manual deactivation blocks URL auto-reactivation, then manual reactivation clears override', async () => {
     const onClicked = chrome.action.onClicked.addListener.mock.calls[0][0]
     const onNav = chrome.webNavigation.onCompleted.addListener.mock.calls[0][0]

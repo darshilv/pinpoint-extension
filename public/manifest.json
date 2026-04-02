@@ -3,7 +3,7 @@
   "name": "Pinpoint",
   "version": "0.1.0",
   "description": "Annotate UI elements and generate AI-ready prompts for coding agents",
-  "permissions": ["storage", "activeTab", "scripting", "commands", "webNavigation"],
+  "permissions": ["storage", "activeTab", "scripting", "webNavigation"],
   "optional_host_permissions": ["https://*/*", "http://*/*"],
   "background": {
     "service_worker": "background.js",
@@ -19,15 +19,6 @@
   },
   "options_page": "settings.html",
   "web_accessible_resources": [],
-  "commands": {
-    "toggle-pinpoint": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+A",
-        "mac": "Command+Shift+A"
-      },
-      "description": "Toggle Pinpoint annotator on this page"
-    }
-  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

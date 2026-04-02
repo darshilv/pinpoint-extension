@@ -153,6 +153,29 @@ describe('content coordinator', () => {
     expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(true)
   })
 
+  it('enters active-select mode when Option+V is pressed', async () => {
+    await activate()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', altKey: true, bubbles: true }))
+
+    expect(toolbarMock.setMode).toHaveBeenCalledWith('active-select')
+    expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(true)
+    expect(overlayMock.unfreeze).toHaveBeenCalled()
+  })
+
+  it('ignores Option+V while typing in an input', async () => {
+    await activate()
+    vi.clearAllMocks()
+
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.focus()
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', altKey: true, bubbles: true }))
+
+    expect(toolbarMock.setMode).not.toHaveBeenCalledWith('active-select')
+    input.remove()
+  })
+
   it('deactivate removes listeners and unmounts components', async () => {
     await activate()
     deactivate()

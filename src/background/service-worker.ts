@@ -8,12 +8,6 @@ chrome.action.onClicked.addListener(async (tab) => {
   if (typeof tab.id === 'number') await toggleTab(tab.id, tab.url)
 })
 
-chrome.commands.onCommand.addListener(async (command) => {
-  if (command !== 'toggle-pinpoint') return
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  if (typeof tab?.id === 'number') await toggleTab(tab.id, tab.url)
-})
-
 chrome.webNavigation.onCompleted.addListener(async (details) => {
   if (details.frameId !== 0) return
   if (manuallyDeactivatedTabs.has(details.tabId)) return
