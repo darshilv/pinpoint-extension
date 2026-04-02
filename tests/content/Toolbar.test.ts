@@ -64,8 +64,8 @@ describe('Toolbar', () => {
       toolbar.setMode('active-select')
 
       expect(document.querySelector(`.${PPT_PREFIX}anchor-actions`)).not.toBeNull()
-      expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action--icon`).length).toBe(1)
-      expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).not.toBeNull()
+      expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action--icon`).length).toBe(2)
+      expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).toBeNull()
       expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).toBeNull()
       expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(`${PPT_PREFIX}toolbar--active`)
     })
@@ -114,7 +114,7 @@ describe('Toolbar', () => {
       let received = null
       document.addEventListener(EVENTS.OPEN_REVIEW, (e) => { received = e }, { once: true })
 
-      document.querySelector(`.${PPT_PREFIX}anchor-action`)?.click()
+      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[0]?.click()
 
       expect(received).not.toBeNull()
     })
@@ -125,9 +125,18 @@ describe('Toolbar', () => {
       let received = null
       document.addEventListener(EVENTS.MODE_CHANGE, (e) => { received = e }, { once: true })
 
-      document.querySelector(`.${PPT_PREFIX}anchor-action`)?.click()
+      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[0]?.click()
 
       expect(received?.detail.mode).toBe('active-select')
+    })
+
+    it('opens the help panel from the help action', () => {
+      toolbar.setMode('active-select')
+
+      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.click()
+
+      expect(document.querySelector(`.${PPT_PREFIX}help-panel`)).not.toBeNull()
+      expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).not.toBeNull()
     })
   })
 
@@ -237,6 +246,7 @@ describe('Toolbar', () => {
   describe('theme toggle', () => {
     it('toggles the theme from the active anchor controls', async () => {
       toolbar.setMode('active-select')
+      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       const setSpy = chrome.storage.local.set
 
       document.querySelector(`.${PPT_PREFIX}theme-toggle`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -245,6 +255,17 @@ describe('Toolbar', () => {
 
       expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({ 'pinpoint:theme': 'light' }))
       expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(`${PPT_PREFIX}theme-light`)
+    })
+
+    it('opens settings from the help panel', () => {
+      toolbar.setMode('active-select')
+      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      document.querySelector(`.${PPT_PREFIX}help-settings`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('settings.html'), '_blank', 'noopener')
+      openSpy.mockRestore()
     })
   })
 

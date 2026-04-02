@@ -108,10 +108,14 @@ function handleAnnotationsChange(): void {
 function handleShortcutKeyDown(e: KeyboardEvent): void {
   if (!overlay || !toolbar || !popup) return
   if (!e.altKey || e.metaKey || e.ctrlKey) return
-  if (e.key.toLowerCase() !== 'v') return
+  if (e.code !== 'KeyV') return
   if (isEditableTarget(e.target)) return
 
   e.preventDefault()
+  if (mode === 'active-select') {
+    setMode('inactive')
+    return
+  }
   setMode('active-select')
 }
 

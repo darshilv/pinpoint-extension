@@ -12,6 +12,7 @@ export class Toolbar {
   #annotations: Annotation[] = []
   #showResolvedHistory = false
   #lastResolvedId: string | null = null
+  #helpOpen = false
   #theme: ToolbarTheme = 'dark'
   #mode: PinpointMode = 'inactive'
   #onKeyDown: ((e: KeyboardEvent) => void) | null = null
@@ -36,7 +37,10 @@ export class Toolbar {
 
   setMode(mode: PinpointMode): void {
     this.#mode = mode
-    if (mode !== 'active-review') this.#showResolvedHistory = false
+    if (mode !== 'active-review') {
+      this.#showResolvedHistory = false
+      this.#helpOpen = false
+    }
     this.#render()
   }
 
@@ -122,6 +126,15 @@ export class Toolbar {
     }))
   }
 
+  #toggleHelp(): void {
+    this.#helpOpen = !this.#helpOpen
+    this.#render()
+  }
+
+  #openSettings(): void {
+    window.open(chrome.runtime.getURL('settings.html'), '_blank', 'noopener')
+  }
+
   #toggleAnchorMode(): void {
     this.#requestMode(this.#mode === 'inactive' ? 'active-select' : 'inactive')
   }
@@ -146,6 +159,7 @@ export class Toolbar {
     const reviewOpen = this.#mode === 'active-review'
     const selecting = this.#mode === 'active-select'
     const anchorActive = this.#mode !== 'inactive'
+    const helpOpen = anchorActive && this.#helpOpen
 
     this.#el.className = [
       `${PPT_PREFIX}toolbar`,
@@ -153,6 +167,7 @@ export class Toolbar {
       anchorActive ? `${PPT_PREFIX}toolbar--active` : `${PPT_PREFIX}toolbar--inactive`,
       selecting ? `${PPT_PREFIX}toolbar--selecting` : '',
       reviewOpen ? `${PPT_PREFIX}toolbar--review-open` : '',
+      helpOpen ? `${PPT_PREFIX}toolbar--help-open` : '',
     ].filter(Boolean).join(' ')
 
     const activeNumberById = new Map(active.map((annotation, index) => [annotation.id, index + 1]))
@@ -182,6 +197,18 @@ export class Toolbar {
     const reviewIcon = `
       <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
         <path d="M5 5.5h10M5 10h10M5 14.5h6" />
+      </svg>
+    `
+    const helpIcon = `
+      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M7.5 7.2a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 4" />
+        <path d="M10 14.9h.01" />
+      </svg>
+    `
+    const settingsIcon = `
+      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M10 4.8a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 0 0 0-10.4Z" />
+        <path d="M10 2.8v1.2M10 16v1.2M4.9 4.9l.85.85M14.25 14.25l.85.85M2.8 10H4M16 10h1.2M4.9 15.1l.85-.85M14.25 5.75l.85-.85" />
       </svg>
     `
     const themeIcon = this.#theme === 'dark'
@@ -215,9 +242,45 @@ export class Toolbar {
               ${reviewIcon}
               ${hasAttention ? `<span class="${PPT_PREFIX}anchor-action-badge">${active.length}</span>` : ''}
             </button>
-            <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme" title="${this.#theme === 'dark' ? 'Dark' : 'Light'} theme">
-              ${themeIcon}
+            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${helpOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${helpOpen ? 'Close help panel' : 'Open help panel'}" title="Help">
+              ${helpIcon}
             </button>
+          </div>
+        ` : ''}
+        ${helpOpen ? `
+          <div class="${PPT_PREFIX}help-panel" aria-label="Pinpoint shortcuts and settings">
+            <div class="${PPT_PREFIX}help-panel-header">
+              <span class="${PPT_PREFIX}help-panel-title">Shortcuts</span>
+              <span class="${PPT_PREFIX}help-panel-subtitle">Move faster without leaving the page.</span>
+            </div>
+            <ul class="${PPT_PREFIX}help-list">
+              <li class="${PPT_PREFIX}help-item">
+                <span class="${PPT_PREFIX}help-item-label">Toggle selection mode</span>
+                <kbd class="${PPT_PREFIX}help-kbd">⌥V</kbd>
+              </li>
+              <li class="${PPT_PREFIX}help-item">
+                <span class="${PPT_PREFIX}help-item-label">Leave review</span>
+                <kbd class="${PPT_PREFIX}help-kbd">H</kbd>
+              </li>
+              <li class="${PPT_PREFIX}help-item">
+                <span class="${PPT_PREFIX}help-item-label">Copy prompt</span>
+                <kbd class="${PPT_PREFIX}help-kbd">C</kbd>
+              </li>
+              <li class="${PPT_PREFIX}help-item">
+                <span class="${PPT_PREFIX}help-item-label">Clear active notes</span>
+                <kbd class="${PPT_PREFIX}help-kbd">D</kbd>
+              </li>
+            </ul>
+            <div class="${PPT_PREFIX}help-panel-actions">
+              <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme">
+                ${themeIcon}
+                <span class="${PPT_PREFIX}help-action-label">${this.#theme === 'dark' ? 'Dark theme' : 'Light theme'}</span>
+              </button>
+              <button class="${PPT_PREFIX}help-settings" type="button" aria-label="Open Pinpoint settings">
+                <span class="${PPT_PREFIX}help-settings-icon" aria-hidden="true">${settingsIcon}</span>
+                <span class="${PPT_PREFIX}help-action-label">Settings</span>
+              </button>
+            </div>
           </div>
         ` : ''}
       </div>
@@ -287,17 +350,25 @@ export class Toolbar {
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}anchor-button`)?.addEventListener('click', () => {
       this.#toggleAnchorMode()
     })
-    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)?.addEventListener('click', () => {
+    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[0]?.addEventListener('click', () => {
       if (reviewOpen) {
         this.#requestMode('active-select')
         return
       }
       this.#requestReview()
     })
+    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[1]?.addEventListener('click', () => {
+      this.#toggleHelp()
+    })
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}theme-toggle`)?.addEventListener('click', (e) => {
       e.preventDefault()
       e.stopPropagation()
       void this.#toggleTheme()
+    })
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}help-settings`)?.addEventListener('click', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      this.#openSettings()
     })
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}toolbar-minimize`)?.addEventListener('click', () => {
       this.#requestMode('active-select')

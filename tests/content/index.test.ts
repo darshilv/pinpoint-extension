@@ -156,7 +156,31 @@ describe('content coordinator', () => {
   it('enters active-select mode when Option+V is pressed', async () => {
     await activate()
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', altKey: true, bubbles: true }))
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '√', code: 'KeyV', altKey: true, bubbles: true }))
+
+    expect(toolbarMock.setMode).toHaveBeenCalledWith('active-select')
+    expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(true)
+    expect(overlayMock.unfreeze).toHaveBeenCalled()
+  })
+
+  it('returns to inactive when Option+V is pressed from active-select mode', async () => {
+    await activate()
+    document.dispatchEvent(new CustomEvent(EVENTS.MODE_CHANGE, { detail: { mode: 'active-select' } }))
+    vi.clearAllMocks()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '√', code: 'KeyV', altKey: true, bubbles: true }))
+
+    expect(toolbarMock.setMode).toHaveBeenCalledWith('inactive')
+    expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(false)
+    expect(overlayMock.freeze).toHaveBeenCalled()
+  })
+
+  it('returns to active-select when Option+V is pressed from review mode', async () => {
+    await activate()
+    document.dispatchEvent(new CustomEvent(EVENTS.MODE_CHANGE, { detail: { mode: 'active-review' } }))
+    vi.clearAllMocks()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '√', code: 'KeyV', altKey: true, bubbles: true }))
 
     expect(toolbarMock.setMode).toHaveBeenCalledWith('active-select')
     expect(overlayMock.setSelectionEnabled).toHaveBeenCalledWith(true)
@@ -170,7 +194,7 @@ describe('content coordinator', () => {
     const input = document.createElement('input')
     document.body.appendChild(input)
     input.focus()
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', altKey: true, bubbles: true }))
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: '√', code: 'KeyV', altKey: true, bubbles: true }))
 
     expect(toolbarMock.setMode).not.toHaveBeenCalledWith('active-select')
     input.remove()
