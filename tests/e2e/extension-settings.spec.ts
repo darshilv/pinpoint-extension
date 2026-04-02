@@ -7,6 +7,7 @@ let context: BrowserContext
 test.beforeAll(async () => {
   const extensionPath = path.resolve(process.cwd(), 'dist')
   context = await chromium.launchPersistentContext('', {
+    channel: process.env.PINPOINT_BROWSER_CHANNEL,
     headless: false,
     viewport: { width: 1280, height: 800 },
     args: [
@@ -55,4 +56,3 @@ test('loads extension settings and validates URL pattern behavior', async () => 
     fullPage: false,
   })
 })
-
