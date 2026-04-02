@@ -260,12 +260,10 @@ describe('Toolbar', () => {
     it('opens settings from the help panel', () => {
       toolbar.setMode('active-select')
       document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
 
       document.querySelector(`.${PPT_PREFIX}help-settings`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
-      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('settings.html'), '_blank', 'noopener')
-      openSpy.mockRestore()
+      expect(chrome.runtime.openOptionsPage).toHaveBeenCalled()
     })
   })
 

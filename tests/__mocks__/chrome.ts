@@ -35,6 +35,7 @@ export const chrome = {
     onMessage: { addListener: vi.fn(), removeListener: vi.fn() },
     sendMessage: vi.fn(async () => {}),
     getURL: vi.fn((path) => `chrome-extension://test/${path}`),
+    openOptionsPage: vi.fn(async () => {}),
   },
   permissions: {
     contains: vi.fn(async () => false),

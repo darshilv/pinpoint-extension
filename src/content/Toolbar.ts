@@ -132,7 +132,7 @@ export class Toolbar {
   }
 
   #openSettings(): void {
-    window.open(chrome.runtime.getURL('settings.html'), '_blank', 'noopener')
+    void chrome.runtime.openOptionsPage()
   }
 
   #toggleAnchorMode(): void {
