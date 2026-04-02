@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Annotate UI elements and generate AI-ready prompts for coding agents",
   "permissions": ["storage", "activeTab", "scripting", "commands", "webNavigation"],
-  "host_permissions": ["<all_urls>"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"

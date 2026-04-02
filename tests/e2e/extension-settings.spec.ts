@@ -43,7 +43,9 @@ test('loads extension settings and validates URL pattern behavior', async () => 
   const input = page.locator('#pattern-input')
   await input.fill('localhost:*')
   await page.locator('#add-pattern-form').dispatchEvent('submit')
-  await expect(page.locator('#pattern-error')).toContainText('Invalid pattern')
+  await expect(page.locator('#pattern-feedback')).toContainText(
+    'Enter a full site pattern like https://app.example.com/*'
+  )
 
   await input.fill('https://example.com/*')
   await page.locator('#add-pattern-form').dispatchEvent('submit')

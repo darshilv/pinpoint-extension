@@ -36,6 +36,11 @@ export const chrome = {
     sendMessage: vi.fn(async () => {}),
     getURL: vi.fn((path) => `chrome-extension://test/${path}`),
   },
+  permissions: {
+    contains: vi.fn(async () => false),
+    request: vi.fn(async () => true),
+    remove: vi.fn(async () => true),
+  },
   tabs: {
     query: vi.fn(async () => []),
     sendMessage: vi.fn(async () => {}),

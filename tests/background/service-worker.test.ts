@@ -10,7 +10,10 @@ describe('service worker', () => {
 
   it('icon click toggles on then off', async () => {
     const onClicked = chrome.action.onClicked.addListener.mock.calls[0][0]
-    await onClicked({ id: 5 })
+    chrome.permissions.contains.mockResolvedValue(false)
+    chrome.permissions.request.mockResolvedValue(true)
+    chrome.storage.sync.get.mockResolvedValue({ [SETTINGS_KEY]: [] })
+    await onClicked({ id: 5, url: 'https://app.example.com/workspace' })
     expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: 'ON', tabId: 5 })
     expect(chrome.scripting.insertCSS).toHaveBeenCalledWith({
       target: { tabId: 5 },
@@ -21,8 +24,10 @@ describe('service worker', () => {
       files: ['content.js'],
     })
     expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(5, { type: MSG.ACTIVATE })
+    expect(chrome.permissions.request).toHaveBeenCalledWith({ origins: ['https://app.example.com/*'] })
+    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ [SETTINGS_KEY]: ['https://app.example.com/*'] })
 
-    await onClicked({ id: 5 })
+    await onClicked({ id: 5, url: 'https://app.example.com/workspace' })
     expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: '', tabId: 5 })
     expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(5, { type: MSG.DEACTIVATE })
   })
@@ -39,20 +44,31 @@ describe('service worker', () => {
     const onClicked = chrome.action.onClicked.addListener.mock.calls[0][0]
     const onNav = chrome.webNavigation.onCompleted.addListener.mock.calls[0][0]
 
-    chrome.storage.sync.get.mockResolvedValue({ [SETTINGS_KEY]: ['https://*.example.com/*'] })
+    chrome.storage.sync.get.mockResolvedValue({ [SETTINGS_KEY]: ['https://app.example.com/*'] })
     chrome.tabs.get.mockResolvedValue({ id: 7, url: 'https://app.example.com/home' })
+    chrome.permissions.contains.mockResolvedValue(true)
 
-    await onClicked({ id: 7 }) // on
-    await onClicked({ id: 7 }) // off manually (override set)
+    await onClicked({ id: 7, url: 'https://app.example.com/home' }) // on
+    await onClicked({ id: 7, url: 'https://app.example.com/home' }) // off manually (override set)
     chrome.tabs.sendMessage.mockClear()
 
     await onNav({ frameId: 0, tabId: 7 })
     expect(chrome.tabs.sendMessage).not.toHaveBeenCalled()
 
-    await onClicked({ id: 7 }) // manual on clears override
+    await onClicked({ id: 7, url: 'https://app.example.com/home' }) // manual on clears override
     chrome.tabs.sendMessage.mockClear()
     await onNav({ frameId: 0, tabId: 7 })
     expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(7, { type: MSG.ACTIVATE })
+  })
+
+  it('does not auto-activate without a stored permission grant', async () => {
+    const onNav = chrome.webNavigation.onCompleted.addListener.mock.calls[0][0]
+    chrome.storage.sync.get.mockResolvedValue({ [SETTINGS_KEY]: ['https://app.example.com/*'] })
+    chrome.tabs.get.mockResolvedValue({ id: 7, url: 'https://app.example.com/home' })
+    chrome.permissions.contains.mockResolvedValue(false)
+
+    await onNav({ frameId: 0, tabId: 7 })
+    expect(chrome.tabs.sendMessage).not.toHaveBeenCalled()
   })
 
   it('matchesPattern performs full URL matching', async () => {

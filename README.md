@@ -30,7 +30,7 @@ This creates the unpacked extension bundle in `dist/`.
 1. Build the extension with `npm run build`
 2. Start the demo page with `npm run demo:serve`
 3. Open [http://localhost:4173/manual-smoke.html](http://localhost:4173/manual-smoke.html) in Chrome
-4. Click the Pinpoint extension action, or add `http://localhost:*/*` in the extension settings page to auto-activate it
+4. Click the Pinpoint extension action for one-time access on the current tab, or add `http://localhost:4173/*` in the extension settings page for persistent site access
 5. Hover and click demo elements to create annotations
 6. Verify the toolbar, popup, save flow, and copy flow all work
 
@@ -59,3 +59,38 @@ npm run test:chrome
 ```
 
 If macOS blocks native binaries in `node_modules`, allow them in `Privacy & Security` or clear quarantine attributes before rerunning the commands above.
+
+## Chrome Web Store Submission Prep
+
+Generate the reviewer docs and packaged ZIP:
+
+```bash
+npm run cws:prepare
+```
+
+That command:
+
+- validates the manifest and icons
+- generates submission docs in `docs/chrome-web-store/generated/`
+- writes metadata to `artifacts/chrome-web-store/`
+- packages `dist/` into a versioned ZIP for upload
+
+Pinpoint now uses a narrow site-access model:
+
+- one-time access comes from the user's direct action via `activeTab`
+- persistent access is granted per site through an explicit Chrome permission prompt
+- only approved origins are stored in settings for auto-activation
+
+Capture store screenshots:
+
+```bash
+npm run cws:screenshots
+```
+
+Core files for submission:
+
+- `docs/chrome-web-store/privacy-policy.md`
+- `docs/chrome-web-store/store-listing.md`
+- `docs/chrome-web-store/generated/reviewer-notes.md`
+- `docs/chrome-web-store/generated/submission-checklist.md`
+- `docs/chrome-web-store/submission-runbook.md`

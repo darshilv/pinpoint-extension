@@ -10,15 +10,24 @@
     <h1>Pinpoint Settings</h1>
 
     <section>
-      <h2>URL Patterns</h2>
-      <p>Pinpoint activates automatically on pages matching these patterns. Use <code>*</code> as a wildcard.</p>
-      <p>Examples: <code>http://localhost:*/*</code> · <code>https://*.mycompany.com/*</code></p>
+      <h2>How Site Access Works</h2>
+      <div class="callout">
+        <p><strong>Use once on the current page:</strong> Click the Pinpoint toolbar button or use the shortcut. Chrome grants temporary access to that tab through your direct action.</p>
+        <p><strong>Always allow a site:</strong> Add the site below and approve Chrome's prompt. Pinpoint will remember that origin and can auto-activate there later.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Allowed Sites</h2>
+      <p>Pinpoint only keeps persistent access to sites you explicitly allow. Adding a site requests Chrome permission for that origin.</p>
+      <p>Enter exact site origins. Wildcard subdomains are not supported in the UI so approvals stay narrow and review-friendly.</p>
+      <p>Examples: <code>http://localhost:3000/*</code> · <code>https://app.mycompany.com/*</code></p>
       <ul id="pattern-list"></ul>
       <form id="add-pattern-form">
-        <input id="pattern-input" type="text" placeholder="e.g. https://*.mycompany.com/*" autocomplete="off">
-        <button type="submit">Add</button>
+        <input id="pattern-input" type="text" placeholder="e.g. https://app.mycompany.com/*" autocomplete="off">
+        <button type="submit">Allow site</button>
       </form>
-      <p id="pattern-error" class="error" aria-live="polite"></p>
+      <p id="pattern-feedback" class="feedback" aria-live="polite"></p>
     </section>
 
     <section>
