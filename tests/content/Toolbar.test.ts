@@ -33,12 +33,18 @@ describe('Toolbar', () => {
     expect(el).not.toBeNull()
   })
 
+  it('starts in a collapsed state', () => {
+    expect(document.querySelector(`.${PPT_PREFIX}toolbar-collapsed`)).not.toBeNull()
+    expect(document.querySelector(`.${PPT_PREFIX}toolbar-header`)).toBeNull()
+  })
+
   it('restores persisted annotations from storage on mount', async () => {
     const saved = [makeAnnotation()]
     await chrome.storage.local.set({ 'pinpoint:/': saved })
 
     const t2 = new Toolbar()
     await t2.mount()
+    document.querySelectorAll(`.${PPT_PREFIX}toolbar .${PPT_PREFIX}toolbar-collapsed`)[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     const list = document.querySelectorAll(`.${PPT_PREFIX}toolbar .${PPT_PREFIX}annotation-item`)
     expect(list.length).toBeGreaterThan(0)
     t2.unmount()
@@ -50,6 +56,7 @@ describe('Toolbar', () => {
       await toolbar.addAnnotation(annotation)
       const items = document.querySelectorAll(`.${PPT_PREFIX}annotation-item`)
       expect(items.length).toBe(1)
+      expect(document.querySelector(`.${PPT_PREFIX}toolbar-header`)).not.toBeNull()
     })
 
     it('persists to storage', async () => {
@@ -101,6 +108,13 @@ describe('Toolbar', () => {
       await toolbar.copyAll()
 
       expect(writeMock).toHaveBeenCalledWith(expect.stringContaining('Fix alignment'))
+    })
+  })
+
+  describe('collapse toggle', () => {
+    it('expands when the collapsed launcher is clicked', () => {
+      document.querySelector(`.${PPT_PREFIX}toolbar-collapsed`)?.click()
+      expect(document.querySelector(`.${PPT_PREFIX}toolbar-header`)).not.toBeNull()
     })
   })
 })

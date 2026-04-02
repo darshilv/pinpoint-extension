@@ -53,9 +53,89 @@
 /* === Toolbar === */
 .ppt-toolbar {
   position: fixed;
-  top: 20px;
+  bottom: 20px;
   right: 20px;
   width: 360px;
+  z-index: 2147483646;
+  font-family: var(--ppt-font-sans);
+  font-size: 13px;
+  color: var(--ppt-ink-strong);
+}
+
+.ppt-toolbar-collapsed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 170px;
+  padding: 12px 14px;
+  border: 1px solid rgba(53, 120, 229, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--ppt-shadow-soft);
+  backdrop-filter: blur(16px);
+  color: var(--ppt-ink-strong);
+}
+
+.ppt-toolbar-collapsed--active {
+  border-color: rgba(53, 120, 229, 0.28);
+  box-shadow: 0 16px 32px rgba(53, 120, 229, 0.16);
+}
+
+.ppt-toolbar-collapsed-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ppt-toolbar-collapsed-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
+  box-shadow: 0 0 0 6px rgba(53, 120, 229, 0.12);
+}
+
+.ppt-toolbar-collapsed-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ppt-toolbar-collapsed-metrics {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--ppt-ink-muted);
+}
+
+.ppt-toolbar-collapsed-count {
+  color: var(--ppt-ink-strong);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ppt-toolbar-collapsed-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ppt-toolbar-header,
+.ppt-toolbar-summary,
+.ppt-list {
+  background-clip: padding-box;
+}
+
+.ppt-toolbar-header,
+.ppt-toolbar-summary,
+.ppt-list,
+.ppt-history-toast,
+.ppt-section,
+.ppt-empty {
+  box-sizing: border-box;
+}
+
+.ppt-toolbar--expanded {
   max-height: 80vh;
   background: var(--ppt-surface);
   border: 1px solid var(--ppt-line);
@@ -64,10 +144,6 @@
   backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
-  z-index: 2147483646;
-  font-family: var(--ppt-font-sans);
-  font-size: 13px;
-  color: var(--ppt-ink-strong);
   overflow: hidden;
 }
 
@@ -104,6 +180,7 @@
 .ppt-toolbar-header-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
   flex-shrink: 0;
 }
 
@@ -357,6 +434,11 @@
   color: var(--ppt-ink);
   font-weight: 600;
   transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.ppt-toolbar-minimize {
+  background: transparent !important;
+  color: var(--ppt-ink-muted) !important;
 }
 
 .ppt-toolbar button:hover {

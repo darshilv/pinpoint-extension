@@ -6,6 +6,7 @@ import type { Annotation } from '../types'
 export class Toolbar {
   #el: HTMLDivElement | null = null
   #annotations: Annotation[] = []
+  #expanded = false
   #showResolvedHistory = false
   #lastResolvedId: string | null = null
 
@@ -30,6 +31,7 @@ export class Toolbar {
 
   async addAnnotation(annotation: Annotation): Promise<void> {
     this.#annotations = [...this.#annotations, annotation]
+    this.#expanded = true
     this.#showResolvedHistory = false
     await saveAnnotations(window.location.pathname, this.#annotations)
     this.#render()
@@ -47,6 +49,7 @@ export class Toolbar {
     this.#annotations = this.#annotations.map(a =>
       a.id === id ? { ...a, status: 'resolved' } : a
     )
+    this.#expanded = true
     this.#lastResolvedId = id
     this.#showResolvedHistory = false
     await saveAnnotations(window.location.pathname, this.#annotations)
@@ -84,11 +87,13 @@ export class Toolbar {
 
   #render(): void {
     if (!this.#el) return
+    this.#el.className = `${PPT_PREFIX}toolbar ${this.#expanded ? `${PPT_PREFIX}toolbar--expanded` : `${PPT_PREFIX}toolbar--collapsed`}`
     const active = this.#activeAnnotations()
     const resolved = this.#resolvedAnnotations()
     const total = this.#annotations.length
     const reviewLabel = active.length === 1 ? 'item to review' : 'items to review'
     const showResolvedToast = !this.#showResolvedHistory && resolved.length > 0 && this.#lastResolvedId !== null
+    const hasAttention = active.length > 0 || showResolvedToast
     const renderItems = (annotations: Annotation[]) => annotations.map(a => `
       <li class="${PPT_PREFIX}annotation-item" data-id="${a.id}">
         <div class="${PPT_PREFIX}item-meta">
@@ -104,6 +109,27 @@ export class Toolbar {
       </li>
     `).join('')
 
+    if (!this.#expanded) {
+      this.#el.innerHTML = `
+        <button class="${PPT_PREFIX}toolbar-collapsed ${hasAttention ? `${PPT_PREFIX}toolbar-collapsed--active` : ''}" type="button" aria-label="Open Pinpoint">
+          <span class="${PPT_PREFIX}toolbar-collapsed-brand">
+            <span class="${PPT_PREFIX}toolbar-collapsed-dot"></span>
+            <span class="${PPT_PREFIX}toolbar-collapsed-title">Pinpoint</span>
+          </span>
+          <span class="${PPT_PREFIX}toolbar-collapsed-metrics">
+            <span class="${PPT_PREFIX}toolbar-collapsed-count">${active.length}</span>
+            <span class="${PPT_PREFIX}toolbar-collapsed-label">active</span>
+          </span>
+        </button>
+      `
+
+      this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}toolbar-collapsed`)?.addEventListener('click', () => {
+        this.#expanded = true
+        this.#render()
+      })
+      return
+    }
+
     this.#el.innerHTML = `
       <div class="${PPT_PREFIX}toolbar-header">
         <div class="${PPT_PREFIX}toolbar-brand">
@@ -111,6 +137,7 @@ export class Toolbar {
           <h2 class="${PPT_PREFIX}toolbar-title">${active.length} ${reviewLabel}</h2>
         </div>
         <div class="${PPT_PREFIX}toolbar-header-actions">
+          <button class="${PPT_PREFIX}toolbar-minimize" type="button" aria-label="Collapse Pinpoint">Hide</button>
           <button class="${PPT_PREFIX}clear-active" ${active.length === 0 ? 'disabled' : ''}>Clear</button>
           <button class="${PPT_PREFIX}copy-all" ${active.length === 0 ? 'disabled' : ''}>Copy prompt</button>
         </div>
@@ -177,6 +204,10 @@ export class Toolbar {
       </ul>
     `
 
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}toolbar-minimize`)?.addEventListener('click', () => {
+      this.#expanded = false
+      this.#render()
+    })
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}copy-all`)?.addEventListener('click', () => this.copyAll())
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}clear-active`)?.addEventListener('click', () => this.#clearActive())
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}history-toggle`)?.addEventListener('click', () => {
