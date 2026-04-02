@@ -609,12 +609,9 @@
   backdrop-filter: blur(16px);
   transform-origin: right center;
   transition:
-    padding 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    gap 220ms cubic-bezier(0.22, 1, 0.36, 1),
     border-color 180ms ease,
     background 180ms ease,
-    box-shadow 220ms ease,
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow 180ms ease;
 }
 
 .ppt-anchor-shell--active {
@@ -624,8 +621,6 @@
 .ppt-anchor-shell:hover,
 .ppt-anchor-shell:focus-within,
 .ppt-toolbar--review-open .ppt-anchor-shell {
-  gap: 12px;
-  padding-right: 10px;
   box-shadow: 0 18px 38px rgba(2, 6, 23, 0.42);
 }
 
@@ -646,6 +641,7 @@
 }
 
 .ppt-anchor-actions {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   max-width: 0;
@@ -666,6 +662,33 @@
   opacity: 1;
   transform: translateX(0) scale(1);
   pointer-events: auto;
+}
+
+.ppt-anchor-actions > * {
+  opacity: 0;
+  transform: translateX(-2px) scale(0.985);
+  transition:
+    opacity 120ms ease,
+    transform 160ms ease;
+}
+
+.ppt-anchor-actions > *:nth-child(1) {
+  transition-delay: 0ms;
+}
+
+.ppt-anchor-actions > *:nth-child(2) {
+  transition-delay: 16ms;
+}
+
+.ppt-anchor-actions > *:nth-child(3) {
+  transition-delay: 32ms;
+}
+
+.ppt-anchor-shell:hover .ppt-anchor-actions > *,
+.ppt-anchor-shell:focus-within .ppt-anchor-actions > *,
+.ppt-toolbar--review-open .ppt-anchor-actions > * {
+  opacity: 1;
+  transform: translateX(0) scale(1);
 }
 
 .ppt-anchor-action {
