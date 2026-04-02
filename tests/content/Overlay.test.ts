@@ -14,21 +14,34 @@ describe('Overlay', () => {
   })
 
   describe('mount / unmount', () => {
-    it('injects a dialog element into the document', () => {
+    it('injects an overlay element into the document', () => {
       overlay.mount()
-      const dialog = document.querySelector(`dialog.${PPT_PREFIX}overlay`)
-      expect(dialog).not.toBeNull()
+      const root = document.querySelector(`div.${PPT_PREFIX}overlay`)
+      expect(root).not.toBeNull()
     })
 
     it('removes the dialog on unmount', () => {
       overlay.mount()
       overlay.unmount()
-      const dialog = document.querySelector(`dialog.${PPT_PREFIX}overlay`)
-      expect(dialog).toBeNull()
+      const root = document.querySelector(`div.${PPT_PREFIX}overlay`)
+      expect(root).toBeNull()
     })
 
     it('is safe to call unmount before mount', () => {
       expect(() => overlay.unmount()).not.toThrow()
+    })
+
+    it('sets a crosshair cursor while selection mode is active', () => {
+      overlay.mount()
+      expect(document.documentElement.style.cursor).toBe('crosshair')
+      expect(document.body.style.cursor).toBe('crosshair')
+    })
+
+    it('clears the crosshair cursor on unmount', () => {
+      overlay.mount()
+      overlay.unmount()
+      expect(document.documentElement.style.cursor).toBe('')
+      expect(document.body.style.cursor).toBe('')
     })
   })
 
@@ -36,16 +49,16 @@ describe('Overlay', () => {
     it('sets pointer-events:none on freeze', () => {
       overlay.mount()
       overlay.freeze()
-      const dialog = document.querySelector(`dialog.${PPT_PREFIX}overlay`)
-      expect(dialog.style.pointerEvents).toBe('none')
+      const root = document.querySelector(`div.${PPT_PREFIX}overlay`)
+      expect(root.style.pointerEvents).toBe('none')
     })
 
     it('clears pointer-events on unfreeze', () => {
       overlay.mount()
       overlay.freeze()
       overlay.unfreeze()
-      const dialog = document.querySelector(`dialog.${PPT_PREFIX}overlay`)
-      expect(dialog.style.pointerEvents).toBe('')
+      const root = document.querySelector(`div.${PPT_PREFIX}overlay`)
+      expect(root.style.pointerEvents).toBe('')
     })
   })
 

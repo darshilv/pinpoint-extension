@@ -24,7 +24,7 @@
 }
 
 /* === Overlay === */
-dialog.ppt-overlay {
+.ppt-overlay {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -37,10 +37,6 @@ dialog.ppt-overlay {
   margin: 0;
   pointer-events: none;
   overflow: hidden;
-}
-
-dialog.ppt-overlay::backdrop {
-  background: transparent;
 }
 
 .ppt-highlight {

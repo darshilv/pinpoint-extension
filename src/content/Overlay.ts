@@ -14,24 +14,23 @@ function isAnnotatorElement(el: Element | null): boolean {
 }
 
 export class Overlay {
-  #dialog: HTMLDialogElement | null = null
+  #root: HTMLDivElement | null = null
   #highlight: HTMLDivElement | null = null
   #onMouseOver: ((e: MouseEvent) => void) | null = null
   #onClick: ((e: MouseEvent) => void) | null = null
   #onKeyDown: ((e: KeyboardEvent) => void) | null = null
 
   mount() {
-    this.#dialog = document.createElement('dialog')
-    this.#dialog.className = `${PPT_PREFIX}overlay`
+    this.#root = document.createElement('div')
+    this.#root.className = `${PPT_PREFIX}overlay`
 
     this.#highlight = document.createElement('div')
     this.#highlight.className = `${PPT_PREFIX}highlight`
-    this.#dialog.appendChild(this.#highlight)
+    this.#root.appendChild(this.#highlight)
 
-    document.body.appendChild(this.#dialog)
-    if (typeof this.#dialog.showModal === 'function') {
-      this.#dialog.showModal()
-    }
+    document.body.appendChild(this.#root)
+    document.documentElement.style.cursor = 'crosshair'
+    document.body.style.cursor = 'crosshair'
 
     this.#onMouseOver = (e) => this.#handleMouseOver(e)
     this.#onClick = (e) => this.#handleClick(e)
@@ -45,21 +44,23 @@ export class Overlay {
   }
 
   unmount() {
-    if (!this.#dialog) return
+    if (!this.#root) return
     if (this.#onMouseOver) document.removeEventListener('mouseover', this.#onMouseOver, true)
     if (this.#onClick) document.removeEventListener('click', this.#onClick, true)
     if (this.#onKeyDown) document.removeEventListener('keydown', this.#onKeyDown)
-    this.#dialog.remove()
-    this.#dialog = null
+    document.documentElement.style.cursor = ''
+    document.body.style.cursor = ''
+    this.#root.remove()
+    this.#root = null
     this.#highlight = null
   }
 
   freeze() {
-    if (this.#dialog) this.#dialog.style.pointerEvents = 'none'
+    if (this.#root) this.#root.style.pointerEvents = 'none'
   }
 
   unfreeze() {
-    if (this.#dialog) this.#dialog.style.pointerEvents = ''
+    if (this.#root) this.#root.style.pointerEvents = ''
   }
 
   // Test seam: allows tests to simulate a click on a specific element
