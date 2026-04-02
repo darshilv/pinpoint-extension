@@ -164,14 +164,6 @@
   gap: 10px;
 }
 
-.ppt-toolbar-collapsed-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
-  box-shadow: 0 0 0 6px rgba(108, 183, 255, 0.12);
-}
-
 .ppt-toolbar-collapsed-title {
   font-size: 13px;
   font-weight: 700;
@@ -194,51 +186,6 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-
-.ppt-theme-toggle {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  padding: 0 !important;
-  border-radius: 999px !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.ppt-theme-toggle-icon {
-  position: relative;
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-}
-
-.ppt-theme-toggle-icon--dark {
-  border-radius: 999px;
-  background: linear-gradient(135deg, #8dc7ff 0%, #4da0ff 100%);
-  box-shadow: inset -5px -4px 0 0 rgba(8, 13, 24, 0.92);
-}
-
-.ppt-theme-toggle-icon--light {
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ffd76b 0%, #ffb347 100%);
-  box-shadow: 0 0 0 3px rgba(255, 199, 95, 0.18);
-}
-
-.ppt-theme-toggle-icon--light::before,
-.ppt-theme-toggle-icon--light::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 999px;
-  border: 1px dashed rgba(255, 199, 95, 0.5);
-}
-
-.ppt-theme-toggle-icon--light::after {
-  inset: -7px;
-  border-color: rgba(255, 199, 95, 0.22);
 }
 
 .ppt-toolbar-header,
@@ -639,13 +586,105 @@
   box-shadow: 0 0 0 6px rgba(108, 183, 255, 0.12);
 }
 
+.ppt-anchor-button-icon {
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ppt-anchor-button-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 160ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    stroke 160ms ease;
+}
+
+.ppt-anchor-button[data-state='inactive'] .ppt-anchor-button-line--vertical {
+  opacity: 0;
+  transform: scaleY(0.1);
+}
+
+.ppt-anchor-button[data-state='inactive']:hover .ppt-anchor-button-line--top,
+.ppt-anchor-button[data-state='inactive']:focus-visible .ppt-anchor-button-line--top {
+  transform: translateY(3px);
+}
+
+.ppt-anchor-button[data-state='inactive']:hover .ppt-anchor-button-line--bottom,
+.ppt-anchor-button[data-state='inactive']:focus-visible .ppt-anchor-button-line--bottom {
+  transform: translateY(-3px);
+}
+
+.ppt-anchor-button[data-state='inactive']:hover .ppt-anchor-button-line--vertical,
+.ppt-anchor-button[data-state='inactive']:focus-visible .ppt-anchor-button-line--vertical {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.ppt-anchor-button[data-state='active'] .ppt-anchor-button-line--top,
+.ppt-anchor-button[data-state='review'] .ppt-anchor-button-line--top {
+  transform: translateY(3px);
+}
+
+.ppt-anchor-button[data-state='active'] .ppt-anchor-button-line--bottom,
+.ppt-anchor-button[data-state='review'] .ppt-anchor-button-line--bottom {
+  transform: translateY(-3px);
+}
+
+.ppt-anchor-button[data-state='active'] .ppt-anchor-button-line--vertical,
+.ppt-anchor-button[data-state='review'] .ppt-anchor-button-line--vertical {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.ppt-anchor-button[data-state='active']:hover .ppt-anchor-button-line--top,
+.ppt-anchor-button[data-state='active']:focus-visible .ppt-anchor-button-line--top,
+.ppt-anchor-button[data-state='review']:hover .ppt-anchor-button-line--top,
+.ppt-anchor-button[data-state='review']:focus-visible .ppt-anchor-button-line--top {
+  transform: translateY(3px);
+}
+
+.ppt-anchor-button[data-state='active']:hover .ppt-anchor-button-line--bottom,
+.ppt-anchor-button[data-state='active']:focus-visible .ppt-anchor-button-line--bottom,
+.ppt-anchor-button[data-state='review']:hover .ppt-anchor-button-line--bottom,
+.ppt-anchor-button[data-state='review']:focus-visible .ppt-anchor-button-line--bottom {
+  transform: translateY(-3px);
+}
+
+.ppt-anchor-button[data-state='active']:hover .ppt-anchor-button-line--vertical,
+.ppt-anchor-button[data-state='active']:focus-visible .ppt-anchor-button-line--vertical,
+.ppt-anchor-button[data-state='review']:hover .ppt-anchor-button-line--vertical,
+.ppt-anchor-button[data-state='review']:focus-visible .ppt-anchor-button-line--vertical {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.ppt-anchor-button[data-state='active']:hover .ppt-anchor-button-icon,
+.ppt-anchor-button[data-state='active']:focus-visible .ppt-anchor-button-icon,
+.ppt-anchor-button[data-state='review']:hover .ppt-anchor-button-icon,
+.ppt-anchor-button[data-state='review']:focus-visible .ppt-anchor-button-icon {
+  transform: rotate(45deg);
+}
+
 .ppt-anchor-actions {
   position: absolute;
   right: calc(100% + 10px);
   top: 50%;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--ppt-line-strong);
+  border-radius: 999px;
+  background: rgba(10, 16, 28, 0.92);
+  box-shadow: var(--ppt-shadow-soft);
+  backdrop-filter: blur(16px);
   max-width: 0;
   opacity: 0;
   overflow: hidden;
@@ -658,10 +697,9 @@
     transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.ppt-anchor-shell:hover .ppt-anchor-actions,
-.ppt-anchor-shell:focus-within .ppt-anchor-actions,
+.ppt-toolbar--active .ppt-anchor-actions,
 .ppt-toolbar--review-open .ppt-anchor-actions {
-  max-width: 220px;
+  max-width: 160px;
   opacity: 1;
   transform: translateY(-50%) translateX(0) scale(1);
   pointer-events: auto;
@@ -683,19 +721,10 @@
   transition-delay: 16ms;
 }
 
-.ppt-anchor-actions > *:nth-child(3) {
-  transition-delay: 32ms;
-}
-
-.ppt-anchor-shell:hover .ppt-anchor-actions > *,
-.ppt-anchor-shell:focus-within .ppt-anchor-actions > *,
+.ppt-toolbar--active .ppt-anchor-actions > *,
 .ppt-toolbar--review-open .ppt-anchor-actions > * {
   opacity: 1;
   transform: translateX(0) scale(1);
-}
-
-.ppt-anchor-action {
-  min-width: 64px;
 }
 
 .ppt-anchor-action--icon,
@@ -709,6 +738,7 @@
 }
 
 .ppt-anchor-action--icon {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -737,9 +767,55 @@
   stroke-linejoin: round;
 }
 
+.ppt-anchor-action-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
+  color: #06111f;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(12, 74, 140, 0.32);
+}
+
+.ppt-anchor-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
+  color: #06111f;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(12, 74, 140, 0.32);
+  transition: opacity 140ms ease, transform 160ms ease;
+}
+
+.ppt-anchor-badge--hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
 .ppt-theme-toggle {
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(17, 26, 45, 0.92) !important;
   transition:
     background 160ms ease,
@@ -749,10 +825,52 @@
     opacity 160ms ease;
 }
 
+.ppt-theme-toggle-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.ppt-theme-toggle-moon,
+.ppt-theme-toggle-sun-ring,
+.ppt-theme-toggle-sun-rays {
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 160ms ease, fill 160ms ease, opacity 160ms ease;
+}
+
+.ppt-theme-toggle-moon {
+  fill: currentColor;
+  stroke: currentColor;
+  color: #8dc7ff;
+}
+
+.ppt-theme-toggle:hover .ppt-theme-toggle-moon,
+.ppt-theme-toggle:focus-visible .ppt-theme-toggle-moon {
+  color: #b6dbff;
+}
+
+.ppt-theme-toggle-sun-ring,
+.ppt-theme-toggle-sun-rays {
+  stroke: #ffc95f;
+}
+
+.ppt-theme-toggle:hover .ppt-theme-toggle-sun-ring,
+.ppt-theme-toggle:hover .ppt-theme-toggle-sun-rays,
+.ppt-theme-toggle:focus-visible .ppt-theme-toggle-sun-ring,
+.ppt-theme-toggle:focus-visible .ppt-theme-toggle-sun-rays {
+  stroke: #ffd76b;
+}
+
 .ppt-theme-light .ppt-anchor-shell,
 .ppt-theme-light .ppt-review-panel,
 .ppt-theme-light .ppt-popup {
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+}
+
+.ppt-theme-light .ppt-anchor-actions {
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .ppt-theme-light .ppt-list {
@@ -773,23 +891,6 @@
 .ppt-theme-light .ppt-popup-textarea {
   background: rgba(255, 255, 255, 0.92);
   color: var(--ppt-ink-strong);
-}
-
-.ppt-anchor-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
-  color: #06111f;
-  font-size: 11px;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .ppt-review-panel {

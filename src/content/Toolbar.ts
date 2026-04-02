@@ -49,18 +49,18 @@ export class Toolbar {
   async addAnnotation(annotation: Annotation): Promise<void> {
     this.#annotations = [...this.#annotations, annotation]
     this.#showResolvedHistory = false
-    await saveAnnotations(window.location.pathname, this.#annotations)
     this.#emitAnnotationsChange()
     this.#render()
+    await saveAnnotations(window.location.pathname, this.#annotations)
   }
 
   async updateAnnotation(id: string, comment: string): Promise<void> {
     this.#annotations = this.#annotations.map(a =>
       a.id === id ? { ...a, feedback: comment, createdAt: Date.now() } : a
     )
-    await saveAnnotations(window.location.pathname, this.#annotations)
     this.#emitAnnotationsChange()
     this.#render()
+    await saveAnnotations(window.location.pathname, this.#annotations)
   }
 
   async resolve(id: string): Promise<void> {
@@ -69,9 +69,9 @@ export class Toolbar {
     )
     this.#lastResolvedId = id
     this.#showResolvedHistory = false
-    await saveAnnotations(window.location.pathname, this.#annotations)
     this.#emitAnnotationsChange()
     this.#render()
+    await saveAnnotations(window.location.pathname, this.#annotations)
   }
 
   async copyAll(): Promise<void> {
@@ -126,8 +126,15 @@ export class Toolbar {
     this.#requestMode(this.#mode === 'inactive' ? 'active-select' : 'inactive')
   }
 
-  #togglePinMode(): void {
-    this.#requestMode(this.#mode === 'active-select' ? 'inactive' : 'active-select')
+  #anchorButtonLabel(): string {
+    if (this.#mode === 'inactive') return 'Activate Pinpoint'
+    return 'Deactivate Pinpoint'
+  }
+
+  #anchorButtonState(): 'inactive' | 'active' | 'review' {
+    if (this.#mode === 'inactive') return 'inactive'
+    if (this.#mode === 'active-review') return 'review'
+    return 'active'
   }
 
   #render(): void {
@@ -172,36 +179,47 @@ export class Toolbar {
       </li>
     `).join('')
 
-    const pinIcon = `
-      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M10 4v12M4 10h12" />
-      </svg>
-    `
     const reviewIcon = `
       <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
         <path d="M5 5.5h10M5 10h10M5 14.5h6" />
       </svg>
     `
+    const themeIcon = this.#theme === 'dark'
+      ? `
+        <svg class="${PPT_PREFIX}theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path class="${PPT_PREFIX}theme-toggle-moon" d="M15.5 4.5a7.5 7.5 0 1 0 4 13.85A8.5 8.5 0 1 1 15.5 4.5z" />
+        </svg>
+      `
+      : `
+        <svg class="${PPT_PREFIX}theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle class="${PPT_PREFIX}theme-toggle-sun-ring" cx="12" cy="12" r="5.25" />
+          <path class="${PPT_PREFIX}theme-toggle-sun-rays" d="M12 3.25v2.1M12 18.65v2.1M3.25 12h2.1M18.65 12h2.1M5.82 5.82l1.49 1.49M16.69 16.69l1.49 1.49M5.82 18.18l1.49-1.49M16.69 7.31l1.49-1.49" />
+        </svg>
+      `
+
+    const anchorButtonState = this.#anchorButtonState()
 
     this.#el.innerHTML = `
       <div class="${PPT_PREFIX}anchor-shell ${anchorActive || hasAttention ? `${PPT_PREFIX}anchor-shell--active` : ''}">
-        <button class="${PPT_PREFIX}anchor-button" type="button" aria-label="${anchorActive ? 'Deactivate Pinpoint' : 'Activate Pinpoint'}">
-          <span class="${PPT_PREFIX}toolbar-collapsed-dot"></span>
+        <button class="${PPT_PREFIX}anchor-button" type="button" data-state="${anchorButtonState}" aria-label="${this.#anchorButtonLabel()}">
+          <svg class="${PPT_PREFIX}anchor-button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--top" d="M7 9h10" />
+            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--bottom" d="M7 15h10" />
+            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--vertical" d="M12 7v10" />
+          </svg>
+          ${hasAttention ? `<span class="${PPT_PREFIX}anchor-badge ${anchorActive ? `${PPT_PREFIX}anchor-badge--hidden` : ''}">${active.length}</span>` : ''}
         </button>
         ${anchorActive ? `
           <div class="${PPT_PREFIX}anchor-actions" aria-label="Pinpoint actions">
-            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${selecting ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${selecting ? 'Pause pin mode' : 'Enter pin mode'}" title="Pin">
-              ${pinIcon}
-            </button>
             <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${reviewOpen ? 'Close review panel' : 'Open review panel'}" title="Review">
               ${reviewIcon}
+              ${hasAttention ? `<span class="${PPT_PREFIX}anchor-action-badge">${active.length}</span>` : ''}
             </button>
             <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme" title="${this.#theme === 'dark' ? 'Dark' : 'Light'} theme">
-              <span class="${PPT_PREFIX}theme-toggle-icon ${PPT_PREFIX}theme-toggle-icon--${this.#theme}" aria-hidden="true"></span>
+              ${themeIcon}
             </button>
           </div>
         ` : ''}
-        ${hasAttention ? `<span class="${PPT_PREFIX}anchor-badge">${active.length}</span>` : ''}
       </div>
       ${reviewOpen ? `
         <aside class="${PPT_PREFIX}review-panel" aria-label="Pinpoint review panel">
@@ -269,10 +287,7 @@ export class Toolbar {
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}anchor-button`)?.addEventListener('click', () => {
       this.#toggleAnchorMode()
     })
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[0]?.addEventListener('click', () => {
-      this.#togglePinMode()
-    })
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[1]?.addEventListener('click', () => {
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)?.addEventListener('click', () => {
       if (reviewOpen) {
         this.#requestMode('active-select')
         return
@@ -308,9 +323,9 @@ export class Toolbar {
   async #clearActive(): Promise<void> {
     this.#annotations = this.#resolvedAnnotations()
     this.#lastResolvedId = null
-    await saveAnnotations(window.location.pathname, this.#annotations)
     this.#emitAnnotationsChange()
     this.#render()
+    await saveAnnotations(window.location.pathname, this.#annotations)
   }
 
   #emitAnnotationsChange(): void {

@@ -40,6 +40,12 @@ describe('Toolbar', () => {
     expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).toBeNull()
   })
 
+  it('shows the count badge on the main control while collapsed', async () => {
+    await toolbar.addAnnotation(makeAnnotation())
+
+    expect(document.querySelector(`.${PPT_PREFIX}anchor-badge`)?.textContent).toBe('1')
+  })
+
   it('restores persisted annotations from storage on mount', async () => {
     const saved = [makeAnnotation()]
     await chrome.storage.local.set({ 'pinpoint:/': saved })
@@ -58,8 +64,19 @@ describe('Toolbar', () => {
       toolbar.setMode('active-select')
 
       expect(document.querySelector(`.${PPT_PREFIX}anchor-actions`)).not.toBeNull()
-      expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action--icon`).length).toBe(2)
+      expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action--icon`).length).toBe(1)
+      expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).not.toBeNull()
       expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).toBeNull()
+      expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(`${PPT_PREFIX}toolbar--active`)
+    })
+
+    it('keeps the action row interactive while active', () => {
+      toolbar.setMode('active-select')
+
+      const actionRow = document.querySelector(`.${PPT_PREFIX}anchor-actions`)
+
+      expect(actionRow).not.toBeNull()
+      expect(getComputedStyle(actionRow).pointerEvents).toBe('auto')
     })
 
     it('shows the side review panel in active-review mode', async () => {
@@ -92,22 +109,12 @@ describe('Toolbar', () => {
       expect(received?.detail.mode).toBe('inactive')
     })
 
-    it('toggles pin mode off from the plus action when already selecting', () => {
-      toolbar.setMode('active-select')
-      let received = null
-      document.addEventListener(EVENTS.MODE_CHANGE, (e) => { received = e }, { once: true })
-
-      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[0]?.click()
-
-      expect(received?.detail.mode).toBe('inactive')
-    })
-
     it('requests review mode from the review action', () => {
       toolbar.setMode('active-select')
       let received = null
       document.addEventListener(EVENTS.OPEN_REVIEW, (e) => { received = e }, { once: true })
 
-      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.click()
+      document.querySelector(`.${PPT_PREFIX}anchor-action`)?.click()
 
       expect(received).not.toBeNull()
     })
@@ -118,9 +125,42 @@ describe('Toolbar', () => {
       let received = null
       document.addEventListener(EVENTS.MODE_CHANGE, (e) => { received = e }, { once: true })
 
-      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.click()
+      document.querySelector(`.${PPT_PREFIX}anchor-action`)?.click()
 
       expect(received?.detail.mode).toBe('active-select')
+    })
+  })
+
+  describe('anchor button states', () => {
+    it('shows the inactive anchor state by default', () => {
+      const anchorButton = document.querySelector(`.${PPT_PREFIX}anchor-button`)
+      expect(anchorButton?.getAttribute('data-state')).toBe('inactive')
+      expect(anchorButton?.getAttribute('aria-label')).toBe('Activate Pinpoint')
+    })
+
+    it('shows the active anchor state in select mode', () => {
+      toolbar.setMode('active-select')
+
+      const anchorButton = document.querySelector(`.${PPT_PREFIX}anchor-button`)
+      expect(anchorButton?.getAttribute('data-state')).toBe('active')
+      expect(anchorButton?.getAttribute('aria-label')).toBe('Deactivate Pinpoint')
+    })
+
+    it('shows the review anchor state when the panel is open', async () => {
+      await toolbar.addAnnotation(makeAnnotation())
+      toolbar.setMode('active-review')
+
+      const anchorButton = document.querySelector(`.${PPT_PREFIX}anchor-button`)
+      expect(anchorButton?.getAttribute('data-state')).toBe('review')
+      expect(anchorButton?.getAttribute('aria-label')).toBe('Deactivate Pinpoint')
+    })
+
+    it('shows the annotation count on the review action', async () => {
+      await toolbar.addAnnotation(makeAnnotation())
+      toolbar.setMode('active-select')
+
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-badge`)?.className).toContain(`${PPT_PREFIX}anchor-badge--hidden`)
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-action-badge`)?.textContent).toBe('1')
     })
   })
 
@@ -162,6 +202,23 @@ describe('Toolbar', () => {
       const sections = Array.from(document.querySelectorAll(`.${PPT_PREFIX}section-title`)).map(el => el.textContent)
       expect(sections).toContain('Resolved history')
       expect(document.querySelectorAll(`.${PPT_PREFIX}annotation-item`).length).toBe(1)
+    })
+
+    it('emits annotation changes immediately when clearing active notes', async () => {
+      await toolbar.addAnnotation(makeAnnotation())
+      toolbar.setMode('active-review')
+
+      const originalSet = chrome.storage.local.set
+      let releaseSave
+      chrome.storage.local.set = vi.fn(() => new Promise(resolve => { releaseSave = resolve }))
+
+      document.querySelector(`.${PPT_PREFIX}clear-active`)?.click()
+
+      expect(document.querySelector(`.${PPT_PREFIX}section-title`)).toBeNull()
+
+      releaseSave()
+      await Promise.resolve()
+      chrome.storage.local.set = originalSet
     })
   })
 
