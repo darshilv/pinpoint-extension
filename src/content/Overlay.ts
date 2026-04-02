@@ -1,4 +1,4 @@
-import { PPT_PREFIX, EVENTS } from '../constants'
+import { PPT_PREFIX, EVENTS } from './constants'
 import { identifyElement, getElementClasses, getNearbyText } from '../utils/domInspector'
 import type { ElementClickDetail } from '../types'
 

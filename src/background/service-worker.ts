@@ -43,6 +43,10 @@ export async function activateTab(tabId: number): Promise<void> {
   activeTabs.add(tabId)
   await chrome.action.setBadgeText({ text: 'ON', tabId })
   await chrome.action.setBadgeBackgroundColor({ color: '#0070d2', tabId })
+  await chrome.scripting.insertCSS({
+    target: { tabId },
+    files: ['content.css'],
+  }).catch(() => {})
   await chrome.scripting.executeScript({
     target: { tabId },
     files: ['content.js'],

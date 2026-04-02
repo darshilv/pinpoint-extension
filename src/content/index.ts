@@ -1,7 +1,7 @@
 import { Overlay } from './Overlay'
 import { Toolbar } from './Toolbar'
 import { Popup } from './Popup'
-import { EVENTS, MSG } from '../constants'
+import { EVENTS, MSG } from './constants'
 import type { Annotation, ElementClickDetail } from '../types'
 import './content.css'
 

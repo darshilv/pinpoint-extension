@@ -48,6 +48,7 @@ export const chrome = {
     onCompleted: { addListener: vi.fn(), removeListener: vi.fn() },
   },
   scripting: {
+    insertCSS: vi.fn(async () => {}),
     executeScript: vi.fn(async () => {}),
   },
   action: {

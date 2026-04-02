@@ -1,4 +1,4 @@
-import { PPT_PREFIX, EVENTS } from '../constants'
+import { PPT_PREFIX, EVENTS } from './constants'
 import type { AnnotationRect } from '../types'
 
 export class Popup {

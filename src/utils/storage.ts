@@ -1,5 +1,6 @@
-import { STORAGE_NAMESPACE } from '../constants'
 import type { Annotation } from '../types'
+
+const STORAGE_NAMESPACE = 'pinpoint'
 
 function storageKey(pathname: string): string {
   return `${STORAGE_NAMESPACE}:${pathname}`

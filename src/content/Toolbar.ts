@@ -1,4 +1,4 @@
-import { PPT_PREFIX } from '../constants'
+import { PPT_PREFIX } from './constants'
 import { getAnnotations, saveAnnotations } from '../utils/storage'
 import { annotationsToMarkdown, annotationToMarkdown } from '../utils/markdown'
 import type { Annotation } from '../types'

@@ -12,6 +12,14 @@ describe('service worker', () => {
     const onClicked = chrome.action.onClicked.addListener.mock.calls[0][0]
     await onClicked({ id: 5 })
     expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: 'ON', tabId: 5 })
+    expect(chrome.scripting.insertCSS).toHaveBeenCalledWith({
+      target: { tabId: 5 },
+      files: ['content.css'],
+    })
+    expect(chrome.scripting.executeScript).toHaveBeenCalledWith({
+      target: { tabId: 5 },
+      files: ['content.js'],
+    })
     expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(5, { type: MSG.ACTIVATE })
 
     await onClicked({ id: 5 })
