@@ -122,6 +122,14 @@ export class Toolbar {
     }))
   }
 
+  #toggleAnchorMode(): void {
+    this.#requestMode(this.#mode === 'inactive' ? 'active-select' : 'inactive')
+  }
+
+  #togglePinMode(): void {
+    this.#requestMode(this.#mode === 'active-select' ? 'inactive' : 'active-select')
+  }
+
   #render(): void {
     if (!this.#el) return
     const active = this.#activeAnnotations()
@@ -177,15 +185,15 @@ export class Toolbar {
 
     this.#el.innerHTML = `
       <div class="${PPT_PREFIX}anchor-shell ${anchorActive || hasAttention ? `${PPT_PREFIX}anchor-shell--active` : ''}">
-        <button class="${PPT_PREFIX}anchor-button" type="button" aria-label="${selecting ? 'Pinpoint is selecting elements' : 'Activate Pinpoint selection'}">
+        <button class="${PPT_PREFIX}anchor-button" type="button" aria-label="${anchorActive ? 'Deactivate Pinpoint' : 'Activate Pinpoint'}">
           <span class="${PPT_PREFIX}toolbar-collapsed-dot"></span>
         </button>
         ${anchorActive ? `
           <div class="${PPT_PREFIX}anchor-actions" aria-label="Pinpoint actions">
-            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${selecting ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="Enter pin mode" title="Pin">
+            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${selecting ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${selecting ? 'Pause pin mode' : 'Enter pin mode'}" title="Pin">
               ${pinIcon}
             </button>
-            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="Open review panel" title="Review">
+            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${reviewOpen ? 'Close review panel' : 'Open review panel'}" title="Review">
               ${reviewIcon}
             </button>
             <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme" title="${this.#theme === 'dark' ? 'Dark' : 'Light'} theme">
@@ -259,12 +267,16 @@ export class Toolbar {
     `
 
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}anchor-button`)?.addEventListener('click', () => {
-      this.#requestMode('active-select')
+      this.#toggleAnchorMode()
     })
     this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[0]?.addEventListener('click', () => {
-      this.#requestMode('active-select')
+      this.#togglePinMode()
     })
     this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[1]?.addEventListener('click', () => {
+      if (reviewOpen) {
+        this.#requestMode('active-select')
+        return
+      }
       this.#requestReview()
     })
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}theme-toggle`)?.addEventListener('click', (e) => {

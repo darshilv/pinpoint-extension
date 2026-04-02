@@ -82,6 +82,26 @@ describe('Toolbar', () => {
       expect(received?.detail.mode).toBe('active-select')
     })
 
+    it('requests inactive mode when the anchor is clicked while active', () => {
+      toolbar.setMode('active-select')
+      let received = null
+      document.addEventListener(EVENTS.MODE_CHANGE, (e) => { received = e }, { once: true })
+
+      document.querySelector(`.${PPT_PREFIX}anchor-button`)?.click()
+
+      expect(received?.detail.mode).toBe('inactive')
+    })
+
+    it('toggles pin mode off from the plus action when already selecting', () => {
+      toolbar.setMode('active-select')
+      let received = null
+      document.addEventListener(EVENTS.MODE_CHANGE, (e) => { received = e }, { once: true })
+
+      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[0]?.click()
+
+      expect(received?.detail.mode).toBe('inactive')
+    })
+
     it('requests review mode from the review action', () => {
       toolbar.setMode('active-select')
       let received = null
@@ -90,6 +110,17 @@ describe('Toolbar', () => {
       document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.click()
 
       expect(received).not.toBeNull()
+    })
+
+    it('closes review mode from the review action when already open', async () => {
+      await toolbar.addAnnotation(makeAnnotation())
+      toolbar.setMode('active-review')
+      let received = null
+      document.addEventListener(EVENTS.MODE_CHANGE, (e) => { received = e }, { once: true })
+
+      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.click()
+
+      expect(received?.detail.mode).toBe('active-select')
     })
   })
 

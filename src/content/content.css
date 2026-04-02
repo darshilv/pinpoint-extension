@@ -600,7 +600,6 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   padding: 8px;
   border: 1px solid var(--ppt-line-strong);
   border-radius: 999px;
@@ -641,14 +640,18 @@
 }
 
 .ppt-anchor-actions {
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   max-width: 0;
   opacity: 0;
   overflow: hidden;
-  transform: translateX(-6px) scale(0.98);
+  transform: translateY(-50%) translateX(4px) scale(0.98);
   pointer-events: none;
+  white-space: nowrap;
   transition:
     max-width 240ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 140ms ease,
@@ -660,13 +663,13 @@
 .ppt-toolbar--review-open .ppt-anchor-actions {
   max-width: 220px;
   opacity: 1;
-  transform: translateX(0) scale(1);
+  transform: translateY(-50%) translateX(0) scale(1);
   pointer-events: auto;
 }
 
 .ppt-anchor-actions > * {
   opacity: 0;
-  transform: translateX(-2px) scale(0.985);
+  transform: translateX(2px) scale(0.985);
   transition:
     opacity 120ms ease,
     transform 160ms ease;
