@@ -35,6 +35,7 @@ describe('Toolbar', () => {
 
   it('starts in a collapsed state', () => {
     expect(document.querySelector(`.${PPT_PREFIX}toolbar-collapsed`)).not.toBeNull()
+    expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).not.toBeNull()
     expect(document.querySelector(`.${PPT_PREFIX}toolbar-header`)).toBeNull()
   })
 
@@ -115,6 +116,16 @@ describe('Toolbar', () => {
     it('expands when the collapsed launcher is clicked', () => {
       document.querySelector(`.${PPT_PREFIX}toolbar-collapsed`)?.click()
       expect(document.querySelector(`.${PPT_PREFIX}toolbar-header`)).not.toBeNull()
+    })
+
+    it('toggles the theme from the collapsed toolbar control', async () => {
+      const setSpy = chrome.storage.local.set
+      document.querySelector(`.${PPT_PREFIX}theme-toggle`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
+
+      expect(document.documentElement.classList.contains(`${PPT_PREFIX}theme-light`)).toBe(true)
+      expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({ 'pinpoint:theme': 'light' }))
+      expect(document.querySelector(`.${PPT_PREFIX}toolbar-header`)).toBeNull()
     })
   })
 })

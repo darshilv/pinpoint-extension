@@ -1,7 +1,12 @@
 import { PPT_PREFIX } from './constants'
+import { STORAGE_NAMESPACE } from '../constants'
 import { getAnnotations, saveAnnotations } from '../utils/storage'
 import { annotationsToMarkdown, annotationToMarkdown } from '../utils/markdown'
 import type { Annotation } from '../types'
+
+type ToolbarTheme = 'light' | 'dark'
+
+const THEME_STORAGE_KEY = `${STORAGE_NAMESPACE}:theme`
 
 export class Toolbar {
   #el: HTMLDivElement | null = null
@@ -9,16 +14,21 @@ export class Toolbar {
   #expanded = false
   #showResolvedHistory = false
   #lastResolvedId: string | null = null
+  #theme: ToolbarTheme = 'dark'
 
   async mount() {
     this.#annotations = await getAnnotations(window.location.pathname)
+    const storedTheme = await chrome.storage.local.get(THEME_STORAGE_KEY) as Record<string, ToolbarTheme | undefined>
+    this.#theme = storedTheme[THEME_STORAGE_KEY] === 'light' ? 'light' : 'dark'
     this.#el = document.createElement('div')
     this.#el.className = `${PPT_PREFIX}toolbar`
     document.body.appendChild(this.#el)
+    this.#applyTheme()
     this.#render()
   }
 
   unmount() {
+    document.documentElement.classList.remove(`${PPT_PREFIX}theme-light`, `${PPT_PREFIX}theme-dark`)
     this.#el?.remove()
     this.#el = null
   }
@@ -111,21 +121,30 @@ export class Toolbar {
 
     if (!this.#expanded) {
       this.#el.innerHTML = `
-        <button class="${PPT_PREFIX}toolbar-collapsed ${hasAttention ? `${PPT_PREFIX}toolbar-collapsed--active` : ''}" type="button" aria-label="Open Pinpoint">
-          <span class="${PPT_PREFIX}toolbar-collapsed-brand">
-            <span class="${PPT_PREFIX}toolbar-collapsed-dot"></span>
-            <span class="${PPT_PREFIX}toolbar-collapsed-title">Pinpoint</span>
-          </span>
-          <span class="${PPT_PREFIX}toolbar-collapsed-metrics">
-            <span class="${PPT_PREFIX}toolbar-collapsed-count">${active.length}</span>
-            <span class="${PPT_PREFIX}toolbar-collapsed-label">active</span>
-          </span>
-        </button>
+        <div class="${PPT_PREFIX}toolbar-collapsed-shell">
+          <button class="${PPT_PREFIX}toolbar-collapsed ${hasAttention ? `${PPT_PREFIX}toolbar-collapsed--active` : ''}" type="button" aria-label="Open Pinpoint">
+            <span class="${PPT_PREFIX}toolbar-collapsed-brand">
+              <span class="${PPT_PREFIX}toolbar-collapsed-dot"></span>
+              <span class="${PPT_PREFIX}toolbar-collapsed-title">Pinpoint</span>
+            </span>
+            <span class="${PPT_PREFIX}toolbar-collapsed-metrics">
+              <span class="${PPT_PREFIX}toolbar-collapsed-count">${active.length}</span>
+              <span class="${PPT_PREFIX}toolbar-collapsed-label">active</span>
+            </span>
+          </button>
+          <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme" title="${this.#theme === 'dark' ? 'Dark' : 'Light'} theme">
+            <span class="${PPT_PREFIX}theme-toggle-icon ${PPT_PREFIX}theme-toggle-icon--${this.#theme}" aria-hidden="true"></span>
+          </button>
+        </div>
       `
 
       this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}toolbar-collapsed`)?.addEventListener('click', () => {
         this.#expanded = true
         this.#render()
+      })
+      this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}theme-toggle`)?.addEventListener('click', (e) => {
+        e.stopPropagation()
+        void this.#toggleTheme()
       })
       return
     }
@@ -230,6 +249,18 @@ export class Toolbar {
     this.#annotations = this.#resolvedAnnotations()
     this.#lastResolvedId = null
     await saveAnnotations(window.location.pathname, this.#annotations)
+    this.#render()
+  }
+
+  #applyTheme(): void {
+    document.documentElement.classList.remove(`${PPT_PREFIX}theme-light`, `${PPT_PREFIX}theme-dark`)
+    document.documentElement.classList.add(`${PPT_PREFIX}theme-${this.#theme}`)
+  }
+
+  async #toggleTheme(): Promise<void> {
+    this.#theme = this.#theme === 'dark' ? 'light' : 'dark'
+    this.#applyTheme()
+    await chrome.storage.local.set({ [THEME_STORAGE_KEY]: this.#theme })
     this.#render()
   }
 }
