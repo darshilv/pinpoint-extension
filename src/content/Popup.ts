@@ -12,6 +12,16 @@ export class Popup {
     this.#el.style.display = 'none'
     this.#el.innerHTML = `
       <form class="${PPT_PREFIX}popup-form">
+        <div class="${PPT_PREFIX}popup-header">
+          <div>
+            <p class="${PPT_PREFIX}popup-eyebrow">Pinpoint note</p>
+            <h3 class="${PPT_PREFIX}popup-title">Capture what should change</h3>
+          </div>
+          <button type="button" class="${PPT_PREFIX}popup-close" aria-label="Close note composer">×</button>
+        </div>
+        <p class="${PPT_PREFIX}popup-helper">
+          Describe the issue, the intended outcome, or the exact UI adjustment you want.
+        </p>
         <textarea class="${PPT_PREFIX}popup-textarea" placeholder="Describe the change needed…" rows="4"></textarea>
         <div class="${PPT_PREFIX}popup-actions">
           <button type="button" class="${PPT_PREFIX}popup-cancel">Cancel</button>
@@ -34,6 +44,7 @@ export class Popup {
     })
 
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-cancel`)!.addEventListener('click', () => this.hide())
+    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-close`)!.addEventListener('click', () => this.hide())
 
     this.#onKeyDown = (e) => {
       if (e.key === 'Escape' && this.#el?.style.display !== 'none') this.hide()
