@@ -1,5 +1,8 @@
 import { PPT_PREFIX, EVENTS } from './constants'
-import type { AnnotationRect } from '../types'
+import type { AnnotationRect, AnnotationSurface } from '../types'
+
+const POPUP_GAP = 12
+const POPUP_VIEWPORT_MARGIN = 12
 
 export class Popup {
   #el: HTMLDivElement | null = null
@@ -16,14 +19,12 @@ export class Popup {
         <div class="${PPT_PREFIX}popup-header">
           <div>
             <p class="${PPT_PREFIX}popup-eyebrow">Pinpoint note</p>
-            <h3 class="${PPT_PREFIX}popup-title">Capture what should change</h3>
+            <h3 class="${PPT_PREFIX}popup-title">Note 1</h3>
           </div>
           <button type="button" class="${PPT_PREFIX}popup-close" aria-label="Close note composer">×</button>
         </div>
-        <p class="${PPT_PREFIX}popup-helper">
-          Describe the issue, the intended outcome, or the exact UI adjustment you want.
-        </p>
-        <textarea class="${PPT_PREFIX}popup-textarea" placeholder="Describe the change needed…" rows="4"></textarea>
+        <p class="${PPT_PREFIX}popup-helper"></p>
+        <textarea class="${PPT_PREFIX}popup-textarea" placeholder="Capture what would change, describe the issue, the intended outcome, or the exact UI adjustment you want." rows="4"></textarea>
         <div class="${PPT_PREFIX}popup-actions">
           <button type="button" class="${PPT_PREFIX}popup-cancel">Cancel</button>
           <button type="submit" class="${PPT_PREFIX}popup-submit">Add</button>
@@ -56,16 +57,39 @@ export class Popup {
     document.addEventListener('keydown', this.#onKeyDown)
   }
 
-  show(rect: AnnotationRect, existing: { id: string; feedback: string } | null) {
+  show(
+    rect: AnnotationRect,
+    existing: { id: string; feedback: string } | null,
+    options: { noteNumber: number; surface: AnnotationSurface; showsPageBadge: boolean },
+  ) {
     this.#existing = existing
     const textarea = this.#el!.querySelector<HTMLTextAreaElement>(`.${PPT_PREFIX}popup-textarea`)!
     const submitBtn = this.#el!.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}popup-submit`)!
+    const title = this.#el!.querySelector<HTMLElement>(`.${PPT_PREFIX}popup-title`)!
+    const helper = this.#el!.querySelector<HTMLElement>(`.${PPT_PREFIX}popup-helper`)!
 
     textarea.value = existing?.feedback ?? ''
     submitBtn.textContent = existing ? 'Update' : 'Add'
+    title.textContent = `Note ${options.noteNumber}`
+    helper.textContent = options.showsPageBadge
+      ? `This note will appear on the page as marker ${options.noteNumber}.`
+      : `This note is attached to ${options.surface.label.toLowerCase()}, so marker ${options.noteNumber} will appear in review only.`
 
-    const top = Math.min(rect.y + rect.height + 8, window.innerHeight - 220)
-    const left = Math.min(rect.x, window.innerWidth - 340)
+    this.#el!.style.cssText = 'display:block;position:fixed;top:0;left:0;visibility:hidden'
+    const popupRect = this.#el!.getBoundingClientRect()
+    const fitsBelow = rect.y + rect.height + POPUP_GAP + popupRect.height <= window.innerHeight - POPUP_VIEWPORT_MARGIN
+    const preferredTop = fitsBelow
+      ? rect.y + rect.height + POPUP_GAP
+      : rect.y - popupRect.height - POPUP_GAP
+    const top = Math.max(
+      POPUP_VIEWPORT_MARGIN,
+      Math.min(window.innerHeight - popupRect.height - POPUP_VIEWPORT_MARGIN, preferredTop),
+    )
+    const preferredLeft = rect.x + Math.min(rect.width / 2, 48) - popupRect.width / 2
+    const left = Math.max(
+      POPUP_VIEWPORT_MARGIN,
+      Math.min(window.innerWidth - popupRect.width - POPUP_VIEWPORT_MARGIN, preferredLeft),
+    )
     this.#el!.style.cssText = `display:block;position:fixed;top:${top}px;left:${left}px`
     this.#visible = true
 

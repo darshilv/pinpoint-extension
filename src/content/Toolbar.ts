@@ -50,6 +50,7 @@ export class Toolbar {
     this.#annotations = [...this.#annotations, annotation]
     this.#showResolvedHistory = false
     await saveAnnotations(window.location.pathname, this.#annotations)
+    this.#emitAnnotationsChange()
     this.#render()
   }
 
@@ -58,6 +59,7 @@ export class Toolbar {
       a.id === id ? { ...a, feedback: comment, createdAt: Date.now() } : a
     )
     await saveAnnotations(window.location.pathname, this.#annotations)
+    this.#emitAnnotationsChange()
     this.#render()
   }
 
@@ -68,6 +70,7 @@ export class Toolbar {
     this.#lastResolvedId = id
     this.#showResolvedHistory = false
     await saveAnnotations(window.location.pathname, this.#annotations)
+    this.#emitAnnotationsChange()
     this.#render()
   }
 
@@ -98,6 +101,10 @@ export class Toolbar {
 
   #resolvedAnnotations(): Annotation[] {
     return this.#annotations.filter(a => a.status === 'resolved')
+  }
+
+  getActiveAnnotations(): Annotation[] {
+    return [...this.#activeAnnotations()]
   }
 
   #requestMode(mode: PinpointMode): void {
@@ -133,11 +140,15 @@ export class Toolbar {
       reviewOpen ? `${PPT_PREFIX}toolbar--review-open` : '',
     ].filter(Boolean).join(' ')
 
+    const activeNumberById = new Map(active.map((annotation, index) => [annotation.id, index + 1]))
     const renderItems = (annotations: Annotation[]) => annotations.map(a => `
       <li class="${PPT_PREFIX}annotation-item" data-id="${a.id}">
         <div class="${PPT_PREFIX}item-meta">
           <span class="${PPT_PREFIX}item-element">${a.selector}</span>
-          <span class="${PPT_PREFIX}item-badge ${a.status === 'resolved' ? `${PPT_PREFIX}item-badge--resolved` : ''}">${a.status === 'active' ? 'Open' : 'Done'}</span>
+          <div class="${PPT_PREFIX}item-meta-badges">
+            ${a.status === 'active' ? `<span class="${PPT_PREFIX}item-note-number">Note ${activeNumberById.get(a.id)}</span>` : ''}
+            <span class="${PPT_PREFIX}item-badge ${a.status === 'resolved' ? `${PPT_PREFIX}item-badge--resolved` : ''}">${a.status === 'active' ? 'Open' : 'Done'}</span>
+          </div>
         </div>
         ${a.surface ? `
           <div class="${PPT_PREFIX}item-surface-row">
@@ -153,6 +164,17 @@ export class Toolbar {
       </li>
     `).join('')
 
+    const pinIcon = `
+      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M10 4v12M4 10h12" />
+      </svg>
+    `
+    const reviewIcon = `
+      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M5 5.5h10M5 10h10M5 14.5h6" />
+      </svg>
+    `
+
     this.#el.innerHTML = `
       <div class="${PPT_PREFIX}anchor-shell ${anchorActive || hasAttention ? `${PPT_PREFIX}anchor-shell--active` : ''}">
         <button class="${PPT_PREFIX}anchor-button" type="button" aria-label="${selecting ? 'Pinpoint is selecting elements' : 'Activate Pinpoint selection'}">
@@ -160,8 +182,12 @@ export class Toolbar {
         </button>
         ${anchorActive ? `
           <div class="${PPT_PREFIX}anchor-actions" aria-label="Pinpoint actions">
-            <button class="${PPT_PREFIX}anchor-action ${selecting ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button">Pin</button>
-            <button class="${PPT_PREFIX}anchor-action ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button">Review</button>
+            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${selecting ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="Enter pin mode" title="Pin">
+              ${pinIcon}
+            </button>
+            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="Open review panel" title="Review">
+              ${reviewIcon}
+            </button>
             <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme" title="${this.#theme === 'dark' ? 'Dark' : 'Light'} theme">
               <span class="${PPT_PREFIX}theme-toggle-icon ${PPT_PREFIX}theme-toggle-icon--${this.#theme}" aria-hidden="true"></span>
             </button>
@@ -242,6 +268,7 @@ export class Toolbar {
       this.#requestReview()
     })
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}theme-toggle`)?.addEventListener('click', (e) => {
+      e.preventDefault()
       e.stopPropagation()
       void this.#toggleTheme()
     })
@@ -270,13 +297,21 @@ export class Toolbar {
     this.#annotations = this.#resolvedAnnotations()
     this.#lastResolvedId = null
     await saveAnnotations(window.location.pathname, this.#annotations)
+    this.#emitAnnotationsChange()
     this.#render()
+  }
+
+  #emitAnnotationsChange(): void {
+    document.dispatchEvent(new CustomEvent(EVENTS.ANNOTATIONS_CHANGE, {
+      bubbles: true,
+      composed: true,
+    }))
   }
 
   async #toggleTheme(): Promise<void> {
     this.#theme = this.#theme === 'dark' ? 'light' : 'dark'
-    await chrome.storage.local.set({ [THEME_STORAGE_KEY]: this.#theme })
     this.#render()
+    await chrome.storage.local.set({ [THEME_STORAGE_KEY]: this.#theme })
   }
 
   #handleKeyDown(e: KeyboardEvent): void {

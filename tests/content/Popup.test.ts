@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { vi } from 'vitest'
 import { Popup } from '../../src/content/Popup'
 import { EVENTS, PPT_PREFIX } from '../../src/constants'
 
@@ -16,29 +17,65 @@ describe('Popup', () => {
 
   describe('show', () => {
     it('becomes visible when shown', () => {
-      popup.show({ x: 100, y: 200, width: 50, height: 30 }, null)
+      popup.show(
+        { x: 100, y: 200, width: 50, height: 30 },
+        null,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
       const el = document.querySelector(`.${PPT_PREFIX}popup`)
       expect(el.style.display).not.toBe('none')
     })
 
     it('shows "Add" label when no existing annotation', () => {
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, null)
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        null,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
       const btn = document.querySelector(`.${PPT_PREFIX}popup-submit`)
       expect(btn.textContent).toBe('Add')
     })
 
     it('shows "Update" label and prefills text for existing annotation', () => {
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, { id: '1', feedback: 'Old feedback' })
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        { id: '1', feedback: 'Old feedback' },
+        { noteNumber: 2, surface: { kind: 'dialog', label: 'Dialog: Invite people' }, showsPageBadge: false },
+      )
       const btn = document.querySelector(`.${PPT_PREFIX}popup-submit`)
       const textarea = document.querySelector(`.${PPT_PREFIX}popup-textarea`)
+      const title = document.querySelector(`.${PPT_PREFIX}popup-title`)
+      const helper = document.querySelector(`.${PPT_PREFIX}popup-helper`)
       expect(btn.textContent).toBe('Update')
       expect(textarea.value).toBe('Old feedback')
+      expect(title.textContent).toBe('Note 2')
+      expect(helper.textContent).toContain('review only')
+    })
+
+    it('keeps the popup inside the viewport when near the bottom edge', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 640, configurable: true })
+      Object.defineProperty(window, 'innerHeight', { value: 480, configurable: true })
+      const el = document.querySelector(`.${PPT_PREFIX}popup`)
+      el.getBoundingClientRect = vi.fn(() => ({ width: 360, height: 220 }))
+
+      popup.show(
+        { x: 540, y: 430, width: 80, height: 24 },
+        null,
+        { noteNumber: 3, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
+
+      expect(el.style.top).toBe('198px')
+      expect(el.style.left).toBe('268px')
     })
   })
 
   describe('hide', () => {
     it('hides the popup', () => {
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, null)
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        null,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
       popup.hide()
       const el = document.querySelector(`.${PPT_PREFIX}popup`)
       expect(el.style.display).toBe('none')
@@ -47,7 +84,11 @@ describe('Popup', () => {
 
   describe('annotationadd event', () => {
     it('dispatches pinpoint:annotationadd with comment on submit', () => {
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, null)
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        null,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
 
       let received = null
       document.addEventListener(EVENTS.ANNOTATION_ADD, (e) => { received = e }, { once: true })
@@ -63,7 +104,11 @@ describe('Popup', () => {
     })
 
     it('does not dispatch event when comment is empty', () => {
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, null)
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        null,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
 
       let received = null
       document.addEventListener(EVENTS.ANNOTATION_ADD, (e) => { received = e }, { once: true })
@@ -76,7 +121,11 @@ describe('Popup', () => {
 
     it('includes existing annotation id on update', () => {
       const existing = { id: 'abc', feedback: 'Old' }
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, existing)
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        existing,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
 
       let received = null
       document.addEventListener(EVENTS.ANNOTATION_ADD, (e) => { received = e }, { once: true })
@@ -91,14 +140,22 @@ describe('Popup', () => {
 
   describe('cancel', () => {
     it('hides popup when cancel is clicked', () => {
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, null)
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        null,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
       document.querySelector(`.${PPT_PREFIX}popup-cancel`).click()
       const el = document.querySelector(`.${PPT_PREFIX}popup`)
       expect(el.style.display).toBe('none')
     })
 
     it('dispatches cancel event when popup is dismissed', () => {
-      popup.show({ x: 0, y: 0, width: 0, height: 0 }, null)
+      popup.show(
+        { x: 0, y: 0, width: 0, height: 0 },
+        null,
+        { noteNumber: 1, surface: { kind: 'page', label: 'Page' }, showsPageBadge: true },
+      )
 
       let received = null
       document.addEventListener(EVENTS.ANNOTATION_CANCEL, (e) => { received = e }, { once: true })

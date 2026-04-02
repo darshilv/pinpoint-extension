@@ -11,6 +11,17 @@ let popup: Popup | null = null
 let pendingElementData: Omit<Annotation, 'id' | 'feedback' | 'status' | 'createdAt'> | null = null
 let mode: PinpointMode = 'inactive'
 
+function syncAnnotationMarkers(): void {
+  if (!overlay || !toolbar) return
+  const markers = toolbar.getActiveAnnotations().map((annotation, index) => ({
+    id: annotation.id,
+    number: index + 1,
+    rect: annotation.rect ?? { x: 0, y: 0, width: 0, height: 0 },
+    surface: annotation.surface,
+  }))
+  overlay.setAnnotationMarkers(markers)
+}
+
 function setMode(nextMode: PinpointMode): void {
   mode = nextMode
   toolbar?.setMode(nextMode)
@@ -23,6 +34,9 @@ function handleElementClick(e: Event): void {
   if (!overlay || !toolbar || !popup) return
   const detail = (e as CustomEvent<ElementClickDetail>).detail
   const existing = toolbar.getAnnotationByPath(detail.path)
+  const active = toolbar.getActiveAnnotations()
+  const existingIndex = existing ? active.findIndex(annotation => annotation.id === existing.id) : -1
+  const noteNumber = existingIndex >= 0 ? existingIndex + 1 : active.length + 1
   pendingElementData = {
     selector: detail.selector,
     path: detail.path,
@@ -32,8 +46,13 @@ function handleElementClick(e: Event): void {
     rect: detail.rect,
     url: window.location.href,
   }
+  overlay.setLockedHighlight(detail.rect)
   overlay.freeze()
-  popup.show(detail.rect, existing)
+  popup.show(detail.rect, existing, {
+    noteNumber,
+    surface: detail.surface,
+    showsPageBadge: detail.surface.kind !== 'dialog',
+  })
 }
 
 async function handleAnnotationAdd(e: Event): Promise<void> {
@@ -52,11 +71,14 @@ async function handleAnnotationAdd(e: Event): Promise<void> {
     }
     await toolbar.addAnnotation(annotation)
   }
+  syncAnnotationMarkers()
+  overlay.setLockedHighlight(null)
   pendingElementData = null
   setMode('active-select')
 }
 
 function handleAnnotationCancel(): void {
+  overlay?.setLockedHighlight(null)
   pendingElementData = null
   setMode('active-select')
 }
@@ -70,6 +92,10 @@ function handleOpenReview(): void {
   setMode('active-review')
 }
 
+function handleAnnotationsChange(): void {
+  syncAnnotationMarkers()
+}
+
 export async function activate(): Promise<void> {
   if (overlay) return
   overlay = new Overlay()
@@ -78,10 +104,12 @@ export async function activate(): Promise<void> {
   overlay.mount()
   await toolbar.mount()
   popup.mount()
+  syncAnnotationMarkers()
   setMode('inactive')
   document.addEventListener(EVENTS.ELEMENT_CLICK, handleElementClick as EventListener)
   document.addEventListener(EVENTS.ANNOTATION_ADD, handleAnnotationAdd as EventListener)
   document.addEventListener(EVENTS.ANNOTATION_CANCEL, handleAnnotationCancel as EventListener)
+  document.addEventListener(EVENTS.ANNOTATIONS_CHANGE, handleAnnotationsChange as EventListener)
   document.addEventListener(EVENTS.MODE_CHANGE, handleModeChange as EventListener)
   document.addEventListener(EVENTS.OPEN_REVIEW, handleOpenReview as EventListener)
 }
@@ -91,6 +119,7 @@ export function deactivate(): void {
   document.removeEventListener(EVENTS.ELEMENT_CLICK, handleElementClick as EventListener)
   document.removeEventListener(EVENTS.ANNOTATION_ADD, handleAnnotationAdd as EventListener)
   document.removeEventListener(EVENTS.ANNOTATION_CANCEL, handleAnnotationCancel as EventListener)
+  document.removeEventListener(EVENTS.ANNOTATIONS_CHANGE, handleAnnotationsChange as EventListener)
   document.removeEventListener(EVENTS.MODE_CHANGE, handleModeChange as EventListener)
   document.removeEventListener(EVENTS.OPEN_REVIEW, handleOpenReview as EventListener)
   popup.hide()

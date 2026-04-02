@@ -13,6 +13,13 @@ export interface AnnotationSurface {
   label: string
 }
 
+export interface AnnotationMarker {
+  id: string
+  number: number
+  rect: AnnotationRect
+  surface?: AnnotationSurface
+}
+
 export interface Annotation {
   id: string
   selector: string

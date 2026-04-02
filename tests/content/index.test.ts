@@ -1,18 +1,28 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+async function flushAsyncWork() {
+  await Promise.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+  await new Promise(resolve => setTimeout(resolve, 0))
+}
+
 const overlayMock = {
   mount: vi.fn(),
   unmount: vi.fn(),
   setSelectionEnabled: vi.fn(),
   freeze: vi.fn(),
   unfreeze: vi.fn(),
+  setLockedHighlight: vi.fn(),
+  setAnnotationMarkers: vi.fn(),
 }
 const toolbarMock = {
   mount: vi.fn(async () => {}),
   unmount: vi.fn(),
   setMode: vi.fn(),
   getAnnotationByPath: vi.fn(() => null),
+  getActiveAnnotations: vi.fn(() => []),
   addAnnotation: vi.fn(async () => {}),
   updateAnnotation: vi.fn(async () => {}),
 }
@@ -34,11 +44,13 @@ import { activate, deactivate } from '../../src/content/index'
 describe('content coordinator', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    toolbarMock.getActiveAnnotations.mockReturnValue([])
     deactivate()
   })
 
   it('elementclick freezes overlay and opens popup', async () => {
     toolbarMock.getAnnotationByPath.mockReturnValue({ id: 'existing', feedback: 'old' })
+    toolbarMock.getActiveAnnotations.mockReturnValue([{ id: 'existing', feedback: 'old' }])
     await activate()
     const rect = { x: 1, y: 2, width: 3, height: 4 }
     const surface = { kind: 'dialog', label: 'Dialog: Invite people' }
@@ -47,7 +59,12 @@ describe('content coordinator', () => {
     }))
     expect(overlayMock.freeze).toHaveBeenCalled()
     expect(toolbarMock.getAnnotationByPath).toHaveBeenCalledWith('div > button.a')
-    expect(popupMock.show).toHaveBeenCalledWith(rect, { id: 'existing', feedback: 'old' })
+    expect(overlayMock.setLockedHighlight).toHaveBeenCalledWith(rect)
+    expect(popupMock.show).toHaveBeenCalledWith(
+      rect,
+      { id: 'existing', feedback: 'old' },
+      { noteNumber: 1, surface, showsPageBadge: false },
+    )
   })
 
   it('starts in inactive mode on activation', async () => {
@@ -75,9 +92,9 @@ describe('content coordinator', () => {
     document.dispatchEvent(new CustomEvent(EVENTS.ANNOTATION_ADD, {
       detail: { feedback: 'updated', existingId: 'abc' },
     }))
-    await Promise.resolve()
-    await Promise.resolve()
+    await flushAsyncWork()
     expect(toolbarMock.updateAnnotation).toHaveBeenCalledWith('abc', 'updated')
+    expect(overlayMock.setLockedHighlight).toHaveBeenCalledWith(null)
     expect(toolbarMock.setMode).toHaveBeenLastCalledWith('active-select')
     expect(overlayMock.setSelectionEnabled).toHaveBeenLastCalledWith(true)
     expect(overlayMock.unfreeze).toHaveBeenCalled()
@@ -100,7 +117,7 @@ describe('content coordinator', () => {
     document.dispatchEvent(new CustomEvent(EVENTS.ANNOTATION_ADD, {
       detail: { feedback: 'new item', existingId: null },
     }))
-    await Promise.resolve()
+    await flushAsyncWork()
     expect(toolbarMock.addAnnotation).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'uuid-1',
@@ -114,6 +131,7 @@ describe('content coordinator', () => {
         createdAt: 123,
       }),
     )
+    expect(overlayMock.setLockedHighlight).toHaveBeenCalledWith(null)
   })
 
   it('opens review mode when requested by the toolbar', async () => {

@@ -58,6 +58,7 @@ describe('Toolbar', () => {
       toolbar.setMode('active-select')
 
       expect(document.querySelector(`.${PPT_PREFIX}anchor-actions`)).not.toBeNull()
+      expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action--icon`).length).toBe(2)
       expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).toBeNull()
     })
 
@@ -98,6 +99,15 @@ describe('Toolbar', () => {
       toolbar.setMode('active-review')
 
       expect(document.querySelector(`.${PPT_PREFIX}item-surface`)?.textContent).toContain('Dialog: Invite people')
+    })
+
+    it('shows the active note number on the annotation card', async () => {
+      await toolbar.addAnnotation(makeAnnotation({ id: 'note-1' }))
+      await toolbar.addAnnotation(makeAnnotation({ id: 'note-2', selector: 'input.email' }))
+      toolbar.setMode('active-review')
+
+      const noteNumbers = Array.from(document.querySelectorAll(`.${PPT_PREFIX}item-note-number`)).map(el => el.textContent)
+      expect(noteNumbers).toEqual(['Note 1', 'Note 2'])
     })
 
     it('updates comment on existing annotation', async () => {
@@ -146,6 +156,7 @@ describe('Toolbar', () => {
       await Promise.resolve()
 
       expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({ 'pinpoint:theme': 'light' }))
+      expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(`${PPT_PREFIX}theme-light`)
     })
   })
 

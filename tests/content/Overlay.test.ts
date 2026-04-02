@@ -69,6 +69,31 @@ describe('Overlay', () => {
       const root = document.querySelector(`div.${PPT_PREFIX}overlay`)
       expect(root.style.pointerEvents).toBe('')
     })
+
+    it('keeps a locked highlight visible while frozen', () => {
+      overlay.mount()
+      overlay.setSelectionEnabled(true)
+      overlay.setLockedHighlight({ x: 12, y: 18, width: 64, height: 24 })
+      overlay.freeze()
+
+      const highlight = document.querySelector(`div.${PPT_PREFIX}highlight`)
+      expect(highlight.style.display).toBe('block')
+      expect(highlight.style.top).toBe('18px')
+    })
+  })
+
+  describe('annotation markers', () => {
+    it('renders numbered markers for page annotations only', () => {
+      overlay.mount()
+      overlay.setAnnotationMarkers([
+        { id: 'a', number: 1, rect: { x: 50, y: 100, width: 80, height: 40 }, surface: { kind: 'page', label: 'Page' } },
+        { id: 'b', number: 2, rect: { x: 20, y: 30, width: 40, height: 20 }, surface: { kind: 'dialog', label: 'Dialog: Settings' } },
+      ])
+
+      const markers = document.querySelectorAll(`.${PPT_PREFIX}marker`)
+      expect(markers).toHaveLength(1)
+      expect(markers[0].textContent).toBe('1')
+    })
   })
 
   describe('elementclick event', () => {
