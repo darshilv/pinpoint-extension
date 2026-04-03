@@ -79,7 +79,7 @@
   transform: translateY(-1px);
 }
 
-.ppt-copy-all,
-.ppt-popup-submit {
+.ppt-popup-submit,
+.ppt-copy-all:not(.ppt-toolbar-header-button) {
   background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
 }

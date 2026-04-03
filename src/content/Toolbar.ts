@@ -16,6 +16,8 @@ export class Toolbar {
   #theme: ToolbarTheme = 'dark';
   #mode: PinpointMode = 'inactive';
   #onKeyDown: ((e: KeyboardEvent) => void) | null = null;
+  #copyAllFeedback: 'idle' | 'copied' = 'idle';
+  #copyAllFeedbackTimeout: number | null = null;
 
   async mount() {
     this.#annotations = await getAnnotations(window.location.pathname);
@@ -35,6 +37,7 @@ export class Toolbar {
 
   unmount() {
     if (this.#onKeyDown) document.removeEventListener('keydown', this.#onKeyDown);
+    if (this.#copyAllFeedbackTimeout !== null) window.clearTimeout(this.#copyAllFeedbackTimeout);
     document.documentElement.removeAttribute('data-pinpoint-theme');
     this.#el?.remove();
     this.#el = null;
@@ -86,6 +89,7 @@ export class Toolbar {
     const md = annotationsToMarkdown(active, window.location.href);
     try {
       await navigator.clipboard.writeText(md);
+      this.#setCopyAllFeedback('copied');
     } catch {
       console.log('[pinpoint] Clipboard unavailable:\n\n' + md);
     }
@@ -133,6 +137,21 @@ export class Toolbar {
     );
   }
 
+  #setCopyAllFeedback(state: 'idle' | 'copied'): void {
+    this.#copyAllFeedback = state;
+    if (this.#copyAllFeedbackTimeout !== null) {
+      window.clearTimeout(this.#copyAllFeedbackTimeout);
+      this.#copyAllFeedbackTimeout = null;
+    }
+    if (state === 'copied') {
+      this.#copyAllFeedbackTimeout = window.setTimeout(() => {
+        this.#copyAllFeedback = 'idle';
+        this.#render();
+      }, 1800);
+    }
+    this.#render();
+  }
+
   #toggleHelp(): void {
     this.#helpOpen = !this.#helpOpen;
     this.#render();
@@ -177,6 +196,20 @@ export class Toolbar {
       .join(' ');
 
     const activeNumberById = new Map(active.map((annotation, index) => [annotation.id, index + 1]));
+    const copyAllIcon =
+      this.#copyAllFeedback === 'copied'
+        ? `
+      <svg class="${PPT_PREFIX}toolbar-header-button-icon" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M3.5 8.2 6.4 11l6.1-6.4" />
+      </svg>
+    `
+        : `
+      <svg class="${PPT_PREFIX}toolbar-header-button-icon" viewBox="0 0 16 16" aria-hidden="true">
+        <rect x="5.2" y="3.2" width="7.3" height="9.3" rx="1.6" />
+        <path d="M9.8 3.2V2.5a1 1 0 0 0-1-1H3.5a1 1 0 0 0-1 1v7.3a1 1 0 0 0 1 1h.7" />
+      </svg>
+    `;
+    const copyAllLabel = this.#copyAllFeedback === 'copied' ? 'Copied' : 'Copy prompt';
     const renderItems = (annotations: Annotation[]) =>
       annotations
         .map(
@@ -305,9 +338,12 @@ export class Toolbar {
               <p class="${PPT_PREFIX}toolbar-status">${active.length} active note${active.length === 1 ? '' : 's'}</p>
             </div>
             <div class="${PPT_PREFIX}toolbar-header-actions">
-              <button class="${PPT_PREFIX}toolbar-minimize" type="button" aria-label="Close review panel">Close</button>
-              <button class="${PPT_PREFIX}clear-active" ${active.length === 0 ? 'disabled' : ''}>Clear</button>
-              <button class="${PPT_PREFIX}copy-all" ${active.length === 0 ? 'disabled' : ''}>Copy prompt</button>
+              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}copy-all ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}toolbar-header-button--success` : ''}" ${active.length === 0 ? 'disabled' : ''}>
+                ${copyAllIcon}
+                <span>${copyAllLabel}</span>
+              </button>
+              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}clear-active" ${active.length === 0 ? 'disabled' : ''}>Clear</button>
+              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}toolbar-minimize ${PPT_PREFIX}toolbar-header-button--icon" type="button" aria-label="Close review panel">×</button>
             </div>
           </div>
           <ul class="${PPT_PREFIX}list">

@@ -292,18 +292,60 @@
   color: var(--ppt-ink);
 }
 
-.ppt-toolbar-minimize {
-  background: transparent !important;
+.ppt-toolbar-header-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 8px 12px;
+  border: 1px solid var(--ppt-line-strong) !important;
+  background: var(--ppt-surface-floating) !important;
+  color: var(--ppt-ink-strong) !important;
+}
+
+.ppt-toolbar-header-button-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ppt-toolbar-header-button--icon {
+  width: 32px;
+  min-width: 32px;
+  padding: 0 !important;
+  justify-content: center;
+  font-size: 18px !important;
+  line-height: 1;
+}
+
+.ppt-toolbar-header-button--success {
+  border-color: rgba(74, 222, 128, 0.26) !important;
+  background: rgba(74, 222, 128, 0.12) !important;
+  color: var(--ppt-success) !important;
+}
+
+.ppt-toolbar-header-button--success:hover,
+.ppt-toolbar-header-button--success:focus-visible {
+  border-color: rgba(74, 222, 128, 0.34) !important;
+  background: rgba(74, 222, 128, 0.16) !important;
+  color: var(--ppt-success) !important;
+}
+
+.ppt-toolbar-header-button:hover,
+.ppt-toolbar-header-button:focus-visible {
+  background: var(--ppt-surface-floating-soft) !important;
+  border-color: rgba(108, 183, 255, 0.3) !important;
+  color: var(--ppt-ink-strong) !important;
+}
+
+.ppt-toolbar-header-button:disabled {
   color: var(--ppt-ink-muted) !important;
-}
-
-.ppt-copy-all {
-  color: #06111f !important;
-  border-color: transparent !important;
-}
-
-.ppt-copy-all:hover {
-  background: linear-gradient(135deg, #8bc7ff 0%, #56a5fb 100%) !important;
 }
 
 .ppt-resolve-one {
