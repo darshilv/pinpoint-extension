@@ -244,6 +244,16 @@ describe('Toolbar', () => {
   })
 
   describe('theme toggle', () => {
+    it('applies the persisted theme to the document root', async () => {
+      await chrome.storage.local.set({ 'pinpoint:theme': 'light' })
+
+      toolbar.unmount()
+      toolbar = new Toolbar()
+      await toolbar.mount()
+
+      expect(document.documentElement.getAttribute('data-pinpoint-theme')).toBe('light')
+    })
+
     it('toggles the theme from the active anchor controls', async () => {
       toolbar.setMode('active-select')
       document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -255,15 +265,7 @@ describe('Toolbar', () => {
 
       expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({ 'pinpoint:theme': 'light' }))
       expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(`${PPT_PREFIX}theme-light`)
-    })
-
-    it('opens settings from the help panel', () => {
-      toolbar.setMode('active-select')
-      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-
-      document.querySelector(`.${PPT_PREFIX}help-settings`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-
-      expect(chrome.runtime.openOptionsPage).toHaveBeenCalled()
+      expect(document.documentElement.getAttribute('data-pinpoint-theme')).toBe('light')
     })
   })
 

@@ -21,6 +21,7 @@ export class Toolbar {
     this.#annotations = await getAnnotations(window.location.pathname)
     const storedTheme = await chrome.storage.local.get(THEME_STORAGE_KEY) as Record<string, ToolbarTheme | undefined>
     this.#theme = storedTheme[THEME_STORAGE_KEY] === 'light' ? 'light' : 'dark'
+    this.#applyGlobalTheme()
     this.#el = document.createElement('div')
     this.#el.className = `${PPT_PREFIX}toolbar`
     document.body.appendChild(this.#el)
@@ -31,6 +32,7 @@ export class Toolbar {
 
   unmount() {
     if (this.#onKeyDown) document.removeEventListener('keydown', this.#onKeyDown)
+    document.documentElement.removeAttribute('data-pinpoint-theme')
     this.#el?.remove()
     this.#el = null
   }
@@ -131,10 +133,6 @@ export class Toolbar {
     this.#render()
   }
 
-  #openSettings(): void {
-    void chrome.runtime.openOptionsPage()
-  }
-
   #toggleAnchorMode(): void {
     this.#requestMode(this.#mode === 'inactive' ? 'active-select' : 'inactive')
   }
@@ -205,12 +203,6 @@ export class Toolbar {
         <path d="M10 14.9h.01" />
       </svg>
     `
-    const settingsIcon = `
-      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M10 4.8a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 0 0 0-10.4Z" />
-        <path d="M10 2.8v1.2M10 16v1.2M4.9 4.9l.85.85M14.25 14.25l.85.85M2.8 10H4M16 10h1.2M4.9 15.1l.85-.85M14.25 5.75l.85-.85" />
-      </svg>
-    `
     const themeIcon = this.#theme === 'dark'
       ? `
         <svg class="${PPT_PREFIX}theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -275,10 +267,6 @@ export class Toolbar {
               <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme">
                 ${themeIcon}
                 <span class="${PPT_PREFIX}help-action-label">${this.#theme === 'dark' ? 'Dark theme' : 'Light theme'}</span>
-              </button>
-              <button class="${PPT_PREFIX}help-settings" type="button" aria-label="Open Pinpoint settings">
-                <span class="${PPT_PREFIX}help-settings-icon" aria-hidden="true">${settingsIcon}</span>
-                <span class="${PPT_PREFIX}help-action-label">Settings</span>
               </button>
             </div>
           </div>
@@ -365,11 +353,6 @@ export class Toolbar {
       e.stopPropagation()
       void this.#toggleTheme()
     })
-    this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}help-settings`)?.addEventListener('click', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      this.#openSettings()
-    })
     this.#el.querySelector<HTMLButtonElement>(`.${PPT_PREFIX}toolbar-minimize`)?.addEventListener('click', () => {
       this.#requestMode('active-select')
     })
@@ -408,8 +391,13 @@ export class Toolbar {
 
   async #toggleTheme(): Promise<void> {
     this.#theme = this.#theme === 'dark' ? 'light' : 'dark'
+    this.#applyGlobalTheme()
     this.#render()
     await chrome.storage.local.set({ [THEME_STORAGE_KEY]: this.#theme })
+  }
+
+  #applyGlobalTheme(): void {
+    document.documentElement.setAttribute('data-pinpoint-theme', this.#theme)
   }
 
   #handleKeyDown(e: KeyboardEvent): void {
