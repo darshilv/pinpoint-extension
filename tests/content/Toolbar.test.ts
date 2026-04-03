@@ -65,7 +65,7 @@ describe('Toolbar', () => {
 
       expect(document.querySelector(`.${PPT_PREFIX}anchor-actions`)).not.toBeNull()
       expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action--icon`).length).toBe(2)
-      expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).toBeNull()
+      expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).not.toBeNull()
       expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).toBeNull()
       expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(`${PPT_PREFIX}toolbar--active`)
     })
@@ -136,7 +136,8 @@ describe('Toolbar', () => {
       document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.click()
 
       expect(document.querySelector(`.${PPT_PREFIX}help-panel`)).not.toBeNull()
-      expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).not.toBeNull()
+      expect(document.querySelector(`.${PPT_PREFIX}help-panel`)?.textContent).not.toContain('Dark theme')
+      expect(document.querySelector(`.${PPT_PREFIX}help-panel`)?.textContent).not.toContain('Light theme')
     })
   })
 

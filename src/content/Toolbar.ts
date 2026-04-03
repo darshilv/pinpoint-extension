@@ -237,10 +237,13 @@ export class Toolbar {
             <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${helpOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${helpOpen ? 'Close help panel' : 'Open help panel'}" title="Help">
               ${helpIcon}
             </button>
+            <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme" title="${this.#theme === 'dark' ? 'Dark theme' : 'Light theme'}">
+              ${themeIcon}
+            </button>
           </div>
         ` : ''}
         ${helpOpen ? `
-          <div class="${PPT_PREFIX}help-panel" aria-label="Pinpoint shortcuts and settings">
+          <div class="${PPT_PREFIX}help-panel" aria-label="Pinpoint shortcuts">
             <div class="${PPT_PREFIX}help-panel-header">
               <span class="${PPT_PREFIX}help-panel-title">Shortcuts</span>
               <span class="${PPT_PREFIX}help-panel-subtitle">Move faster without leaving the page.</span>
@@ -263,12 +266,6 @@ export class Toolbar {
                 <kbd class="${PPT_PREFIX}help-kbd">D</kbd>
               </li>
             </ul>
-            <div class="${PPT_PREFIX}help-panel-actions">
-              <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme">
-                ${themeIcon}
-                <span class="${PPT_PREFIX}help-action-label">${this.#theme === 'dark' ? 'Dark theme' : 'Light theme'}</span>
-              </button>
-            </div>
           </div>
         ` : ''}
       </div>
