@@ -1,41 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Pinpoint Settings</title>
-  <link rel="stylesheet" href="settings.css">
-</head>
-<body>
-  <div class="settings-container">
-    <h1>Pinpoint Settings</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pinpoint Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="settings-container">
+      <h1>Pinpoint Settings</h1>
 
-    <section>
-      <h2>How Site Access Works</h2>
-      <div class="callout">
-        <p><strong>Use once on the current page:</strong> Click the Pinpoint toolbar button or use the shortcut. Chrome grants temporary access to that tab through your direct action.</p>
-        <p><strong>Always allow a site:</strong> Add the site below and approve Chrome's prompt. Pinpoint will remember that origin and can auto-activate there later.</p>
-      </div>
-    </section>
+      <section>
+        <h2>How Site Access Works</h2>
+        <div class="callout">
+          <p>
+            <strong>Use once on the current page:</strong> Click the Pinpoint toolbar button or use
+            the shortcut. Chrome grants temporary access to that tab through your direct action.
+          </p>
+          <p>
+            <strong>Always allow a site:</strong> Add the site below and approve Chrome's prompt.
+            Pinpoint will remember that origin and can auto-activate there later.
+          </p>
+        </div>
+      </section>
 
-    <section>
-      <h2>Allowed Sites</h2>
-      <p>Pinpoint only keeps persistent access to sites you explicitly allow. Adding a site requests Chrome permission for that origin.</p>
-      <p>Enter exact site origins. Wildcard subdomains are not supported in the UI so approvals stay narrow and review-friendly.</p>
-      <p>Examples: <code>http://localhost:3000/*</code> · <code>https://app.mycompany.com/*</code></p>
-      <ul id="pattern-list"></ul>
-      <form id="add-pattern-form">
-        <input id="pattern-input" type="text" placeholder="e.g. https://app.mycompany.com/*" autocomplete="off">
-        <button type="submit">Allow site</button>
-      </form>
-      <p id="pattern-feedback" class="feedback" aria-live="polite"></p>
-    </section>
+      <section>
+        <h2>Allowed Sites</h2>
+        <p>
+          Pinpoint only keeps persistent access to sites you explicitly allow. Adding a site
+          requests Chrome permission for that origin.
+        </p>
+        <p>
+          Enter exact site origins. Wildcard subdomains are not supported in the UI so approvals
+          stay narrow and review-friendly.
+        </p>
+        <p>
+          Examples: <code>http://localhost:3000/*</code> · <code>https://app.mycompany.com/*</code>
+        </p>
+        <ul id="pattern-list"></ul>
+        <form id="add-pattern-form">
+          <input
+            id="pattern-input"
+            type="text"
+            placeholder="e.g. https://app.mycompany.com/*"
+            autocomplete="off"
+          />
+          <button type="submit">Allow site</button>
+        </form>
+        <p id="pattern-feedback" class="feedback" aria-live="polite"></p>
+      </section>
 
-    <section>
-      <h2>Keyboard Shortcut</h2>
-      <p>Pinpoint uses Chrome's extension shortcut. Recommended on macOS: <kbd>⌥P</kbd>.</p>
-      <a href="chrome://extensions/shortcuts" target="_blank">Change shortcut in Chrome settings →</a>
-    </section>
-  </div>
-  <script type="module" src="./settings.ts"></script>
-</body>
+      <section>
+        <h2>Keyboard Shortcut</h2>
+        <p>Pinpoint uses Chrome's extension shortcut. Recommended on macOS: <kbd>⌥P</kbd>.</p>
+        <a href="chrome://extensions/shortcuts" target="_blank"
+          >Change shortcut in Chrome settings →</a
+        >
+      </section>
+    </div>
+    <script type="module" src="./settings.ts"></script>
+  </body>
 </html>

@@ -1,0 +1,12 @@
+dist
+node_modules
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+package-lock.json
+public/manifest.json
+dist/manifest.json
+test-results
+coverage

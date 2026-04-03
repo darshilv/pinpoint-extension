@@ -1,0 +1,50 @@
+/* === Overlay === */
+.ppt-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ppt-markers {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ppt-highlight {
+  position: fixed;
+  display: none;
+  border: 2px solid var(--ppt-brand);
+  border-radius: 10px;
+  background: var(--ppt-brand-soft);
+  box-shadow: 0 0 0 9999px var(--ppt-highlight-wash);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.ppt-marker {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ppt-marker-border);
+  border-radius: 999px;
+  background: var(--ppt-marker-bg);
+  color: var(--ppt-marker-text);
+  box-shadow: var(--ppt-marker-shadow);
+  font-family: var(--ppt-font-sans);
+  font-size: 12px;
+  font-weight: 800;
+  pointer-events: none;
+}

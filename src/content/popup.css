@@ -1,0 +1,116 @@
+/* === Popup === */
+.ppt-popup {
+  position: fixed;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  background: var(--ppt-popup-surface);
+  border: 1px solid var(--ppt-line);
+  border-radius: var(--ppt-radius-xl);
+  box-shadow: var(--ppt-shadow);
+  z-index: 2147483647;
+  font-family: var(--ppt-font-sans);
+  font-size: 13px;
+  padding: 18px;
+  backdrop-filter: blur(16px);
+}
+
+.ppt-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ppt-popup-eyebrow {
+  margin: 0 0 4px;
+  color: var(--ppt-ink-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ppt-popup-helper {
+  margin: 10px 0 14px;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+  color: var(--ppt-ink-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ppt-popup-close {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--ppt-line) !important;
+  background: color-mix(in srgb, var(--ppt-surface-floating) 92%, transparent) !important;
+  color: var(--ppt-ink-muted) !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  flex-shrink: 0;
+}
+
+.ppt-popup-close:hover,
+.ppt-popup-close:focus-visible {
+  background: var(--ppt-surface-floating-soft) !important;
+  border-color: rgba(108, 183, 255, 0.3) !important;
+  color: var(--ppt-ink-strong) !important;
+}
+
+.ppt-popup-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--ppt-line-strong);
+  border-radius: 14px;
+  font-size: 13px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+  background: var(--ppt-input-surface);
+  color: var(--ppt-ink-strong);
+  min-height: 118px;
+}
+
+.ppt-popup-textarea::placeholder {
+  color: var(--ppt-ink-placeholder);
+  opacity: 1;
+}
+
+.ppt-popup-textarea:focus {
+  outline: none;
+  border-color: rgba(108, 183, 255, 0.42);
+  box-shadow: 0 0 0 4px rgba(108, 183, 255, 0.14);
+}
+
+.ppt-popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ppt-popup-cancel {
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: var(--ppt-ink-strong);
+  font-size: 13px;
+}
+
+.ppt-popup-submit {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ppt-popup-submit:hover {
+  background: linear-gradient(135deg, #3d82f2 0%, #2a63c4 100%);
+}

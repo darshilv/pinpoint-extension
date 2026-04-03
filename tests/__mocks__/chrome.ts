@@ -1,28 +1,28 @@
 // @ts-nocheck
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 function createStorageArea() {
-  const data = {}
+  const data = {};
   return {
     get: vi.fn(async (keys) => {
-      if (typeof keys === 'string') return { [keys]: data[keys] }
-      if (Array.isArray(keys)) return Object.fromEntries(keys.map((k) => [k, data[k]]))
-      return { ...data }
+      if (typeof keys === 'string') return { [keys]: data[keys] };
+      if (Array.isArray(keys)) return Object.fromEntries(keys.map((k) => [k, data[k]]));
+      return { ...data };
     }),
     set: vi.fn(async (items) => {
-      Object.assign(data, items)
+      Object.assign(data, items);
     }),
     remove: vi.fn(async (keys) => {
-      const ks = Array.isArray(keys) ? keys : [keys]
-      ks.forEach((k) => delete data[k])
+      const ks = Array.isArray(keys) ? keys : [keys];
+      ks.forEach((k) => delete data[k]);
     }),
     clear: vi.fn(async () => {
-      Object.keys(data).forEach((k) => delete data[k])
+      Object.keys(data).forEach((k) => delete data[k]);
     }),
     _reset() {
-      Object.keys(data).forEach((k) => delete data[k])
+      Object.keys(data).forEach((k) => delete data[k]);
     },
-  }
+  };
 }
 
 export const chrome = {
@@ -62,4 +62,4 @@ export const chrome = {
     setBadgeText: vi.fn(async () => {}),
     setBadgeBackgroundColor: vi.fn(async () => {}),
   },
-}
+};

@@ -9,6 +9,7 @@
 ## Problem
 
 The current npm package has three compounding distribution problems:
+
 1. Hosted on an internal Salesforce registry — hard to install and update
 2. Requires per-project vite config changes and a component tag in a template
 3. Only works in LWC apps using `vite-plugin-lwc`
@@ -19,11 +20,11 @@ A Chrome extension solves all three: install once, works on any webpage, no proj
 
 ## Product Roadmap
 
-| Phase | Scope |
-|---|---|
-| **1 — Extension (this spec)** | Solo use, local persistence, works on any webpage |
-| **2 — Identity** | Google Sign-In via Chrome Identity API; annotations get `userId` + `userName` |
-| **3 — Collaboration** | Backend sync (Firestore), threaded comments, session sharing, full context bundle → AI prompt |
+| Phase                         | Scope                                                                                         |
+| ----------------------------- | --------------------------------------------------------------------------------------------- |
+| **1 — Extension (this spec)** | Solo use, local persistence, works on any webpage                                             |
+| **2 — Identity**              | Google Sign-In via Chrome Identity API; annotations get `userId` + `userName`                 |
+| **3 — Collaboration**         | Backend sync (Firestore), threaded comments, session sharing, full context bundle → AI prompt |
 
 ---
 
@@ -50,11 +51,11 @@ New repo: `pinpoint-extension`. The existing npm package repo is archived or kep
 
 ### Entry Points (Vite outputs)
 
-| File | Role |
-|---|---|
-| `content.js` + `content.css` | Injected into pages; all annotation UI |
-| `background.js` | Service worker; handles activation, icon click, hotkey |
-| `settings.html` + `settings.js` | Extension settings page |
+| File                            | Role                                                   |
+| ------------------------------- | ------------------------------------------------------ |
+| `content.js` + `content.css`    | Injected into pages; all annotation UI                 |
+| `background.js`                 | Service worker; handles activation, icon click, hotkey |
+| `settings.html` + `settings.js` | Extension settings page                                |
 
 ### Permissions
 
@@ -96,11 +97,11 @@ Three vanilla JS classes, each managing their own DOM subtree.
 
 All three utils from the current package port with minimal changes.
 
-| Utility | Changes |
-|---|---|
+| Utility           | Changes                                                                                                                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `domInspector.js` | None — shadow DOM traversal via `getRootNode()` + `root.host` works identically from a content script for open native shadow roots. Synthetic shadow (older LWC) produces flat selectors without shadow-crossing paths — acceptable degradation. |
-| `markdown.js` | Rename LWC-specific language to generic terms (e.g., "component path" → "element path"). Output format otherwise unchanged — still designed for AI agent consumption. |
-| `storage.js` | Swap `localStorage` for `chrome.storage.local` (async API, higher quota, more reliable). Key format unchanged: `/path/name` per page URL. |
+| `markdown.js`     | Rename LWC-specific language to generic terms (e.g., "component path" → "element path"). Output format otherwise unchanged — still designed for AI agent consumption.                                                                            |
+| `storage.js`      | Swap `localStorage` for `chrome.storage.local` (async API, higher quota, more reliable). Key format unchanged: `/path/name` per page URL.                                                                                                        |
 
 ---
 
@@ -138,12 +139,15 @@ All three mechanisms coordinate through the service worker. Activation state is 
 **Priority rule:** manual icon click or keyboard shortcut always overrides URL pattern auto-activation. If a user explicitly deactivates on a matching URL, the annotator stays off for that tab for the remainder of the session.
 
 ### URL Patterns
+
 Configured in the settings page. On page load, the service worker checks the current URL against saved patterns and injects the content script if it matches. Patterns support wildcards (e.g., `localhost:*`, `*.mycompany.com/*`).
 
 ### Extension Icon Click
+
 Toggles the annotator on/off for the current tab. The icon badge reflects current state (on/off).
 
 ### Keyboard Shortcut
+
 Default: `Ctrl+Shift+A` / `Cmd+Shift+A`. Configurable via Chrome's native shortcut settings (`chrome://extensions/shortcuts`) — no custom hotkey UI needed.
 
 ---
@@ -151,6 +155,7 @@ Default: `Ctrl+Shift+A` / `Cmd+Shift+A`. Configurable via Chrome's native shortc
 ## Settings Page
 
 Minimal UI:
+
 - List of saved URL patterns with add/remove controls
 - Link to `chrome://extensions/shortcuts` for hotkey configuration
 
@@ -161,17 +166,21 @@ Minimal UI:
 **Vitest** for all tests. Three layers:
 
 ### Unit — Utils
+
 Pure functions, no browser APIs. Cover `domInspector` path generation, `markdown` output format, `storage` read/write. These are highest priority since they produce the AI prompt output.
 
 ### Component — UI Classes
+
 Tested with `jsdom`. Chrome APIs (`chrome.storage`, `chrome.runtime`, `chrome.commands`) stubbed via a shared mock module in `tests/__mocks__/chrome.js` — one place, imported by all component tests (DRY).
 
 Test contracts: given input events, assert correct DOM mutations and output events. No testing of internal implementation details.
 
 ### Integration
+
 A fixture HTML page with nested shadow roots simulating a real LWC-like component tree. Verifies the full pipeline: click → `domInspector` path → `markdown` output.
 
 ### Coverage target
+
 Utils: 100%. Components: critical paths (annotation add/edit/resolve/copy). Integration: happy path + modal/top-layer scenario.
 
 ---
@@ -181,6 +190,7 @@ Utils: 100%. Components: critical paths (annotation add/edit/resolve/copy). Inte
 Content scripts share the page DOM and can access open shadow roots via `element.shadowRoot`. The `domInspector` traversal is unaffected.
 
 Modals and popovers are fully supported:
+
 - **z-index modals** (most frameworks): overlay renders above them naturally
 - **Native `<dialog>` / Popover API** (top-layer): overlay is itself a `<dialog showModal()>`, so it enters the top layer and renders above everything
 

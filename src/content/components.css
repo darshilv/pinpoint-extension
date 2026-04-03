@@ -1,0 +1,85 @@
+/* === Shared Components === */
+.ppt-toolbar-header,
+.ppt-list {
+  background-clip: padding-box;
+}
+
+.ppt-toolbar-header,
+.ppt-list,
+.ppt-history-toast,
+.ppt-section,
+.ppt-empty,
+.ppt-popup,
+.ppt-popup-textarea {
+  box-sizing: border-box;
+}
+
+.ppt-item-badge,
+.ppt-item-note-number,
+.ppt-item-surface,
+.ppt-anchor-action-badge,
+.ppt-anchor-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ppt-item-badge,
+.ppt-item-note-number,
+.ppt-item-surface {
+  min-width: 24px;
+  padding: 4px 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ppt-anchor-action-badge,
+.ppt-anchor-badge {
+  height: 18px;
+  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
+  color: #06111f;
+  box-shadow: 0 6px 16px rgba(12, 74, 140, 0.32);
+}
+
+.ppt-toolbar button,
+.ppt-popup-cancel,
+.ppt-popup-submit,
+.ppt-popup-close {
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+
+.ppt-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ppt-toolbar button,
+.ppt-popup-cancel {
+  border: 1px solid var(--ppt-line-strong);
+  background: var(--ppt-surface-floating);
+  font-weight: 600;
+}
+
+.ppt-toolbar button:hover,
+.ppt-popup-cancel:hover,
+.ppt-popup-cancel:focus-visible {
+  background: var(--ppt-surface-floating-soft);
+  border-color: rgba(108, 183, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.ppt-copy-all,
+.ppt-popup-submit {
+  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
+}

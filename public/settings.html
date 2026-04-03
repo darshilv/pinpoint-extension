@@ -1,32 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Pinpoint Settings</title>
-  <link rel="stylesheet" href="settings.css">
-</head>
-<body>
-  <div class="settings-container">
-    <h1>Pinpoint Settings</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pinpoint Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="settings-container">
+      <h1>Pinpoint Settings</h1>
 
-    <section>
-      <h2>URL Patterns</h2>
-      <p>Pinpoint activates automatically on pages matching these patterns. Use <code>*</code> as a wildcard.</p>
-      <p>Examples: <code>http://localhost:*/*</code> · <code>https://*.mycompany.com/*</code></p>
-      <ul id="pattern-list"></ul>
-      <form id="add-pattern-form">
-        <input id="pattern-input" type="text" placeholder="e.g. https://*.mycompany.com/*" autocomplete="off">
-        <button type="submit">Add</button>
-      </form>
-      <p id="pattern-error" class="error" aria-live="polite"></p>
-    </section>
+      <section>
+        <h2>URL Patterns</h2>
+        <p>
+          Pinpoint activates automatically on pages matching these patterns. Use <code>*</code> as a
+          wildcard.
+        </p>
+        <p>Examples: <code>http://localhost:*/*</code> · <code>https://*.mycompany.com/*</code></p>
+        <ul id="pattern-list"></ul>
+        <form id="add-pattern-form">
+          <input
+            id="pattern-input"
+            type="text"
+            placeholder="e.g. https://*.mycompany.com/*"
+            autocomplete="off"
+          />
+          <button type="submit">Add</button>
+        </form>
+        <p id="pattern-error" class="error" aria-live="polite"></p>
+      </section>
 
-    <section>
-      <h2>Keyboard Shortcut</h2>
-      <p>Default: <kbd>Ctrl+Shift+A</kbd> / <kbd>⌘+Shift+A</kbd></p>
-      <a href="chrome://extensions/shortcuts" target="_blank">Change shortcut in Chrome settings →</a>
-    </section>
-  </div>
-  <script type="module" src="./settings.js"></script>
-</body>
+      <section>
+        <h2>Keyboard Shortcut</h2>
+        <p>Default: <kbd>Ctrl+Shift+A</kbd> / <kbd>⌘+Shift+A</kbd></p>
+        <a href="chrome://extensions/shortcuts" target="_blank"
+          >Change shortcut in Chrome settings →</a
+        >
+      </section>
+    </div>
+    <script type="module" src="./settings.js"></script>
+  </body>
 </html>
