@@ -20,7 +20,6 @@ Key workflows:
 - `storage`: Stores saved annotations, local UI state, and extension preferences.
 - `activeTab`: Allows user-triggered activation on the current tab without granting ongoing access to every site.
 - `scripting`: Injects the Pinpoint content script and stylesheet only when the user activates the extension.
-- `commands`: Supports the keyboard shortcut that toggles Pinpoint on the current page.
 - `webNavigation`: Re-enables Pinpoint after top-level navigation only for sites the user explicitly approved.
 - `https://*/*`: Optional host access that the user can grant per HTTPS site when they want persistent access and auto-activation.
 - `http://*/*`: Optional host access that the user can grant per HTTP site, primarily for local development or non-production environments.

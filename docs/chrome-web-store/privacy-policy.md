@@ -36,4 +36,4 @@ Users can remove saved notes by clearing them from the Pinpoint interface or by 
 
 ## Contact
 
-Before submitting to the Chrome Web Store, replace this section with a real support or privacy contact email and host this policy at a stable public URL for the Developer Dashboard.
+For privacy or support questions about Pinpoint, contact: `ztnbqfspcs@privaterelay.appleid.com`

@@ -1,6 +1,6 @@
 # Chrome Web Store Submission Checklist
 
-Generated on 2026-04-02T07:21:22.251Z from `public/manifest.json`.
+Generated on 2026-04-03T04:55:06.589Z from `public/manifest.json`.
 
 ## Ready in repo
 
@@ -26,4 +26,4 @@ Generated on 2026-04-02T07:21:22.251Z from `public/manifest.json`.
 
 ## Review risks to watch
 
-- No store screenshots found yet in `artifacts/chrome-web-store/screenshots/`.
+- No major repo-level warnings detected.

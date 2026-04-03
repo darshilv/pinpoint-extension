@@ -16,7 +16,6 @@ Pinpoint helps a user review a webpage UI, click elements, record feedback annot
 - `storage`: Stores saved annotations, local UI state, and extension preferences.
 - `activeTab`: Allows user-triggered activation on the current tab without granting ongoing access to every site.
 - `scripting`: Injects the Pinpoint content script and stylesheet only when the user activates the extension.
-- `commands`: Supports the keyboard shortcut that toggles Pinpoint on the current page.
 - `webNavigation`: Re-enables Pinpoint after top-level navigation only for sites the user explicitly approved.
 
 ## Declared host permissions
