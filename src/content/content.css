@@ -21,6 +21,11 @@
   --ppt-brand: #6cb7ff;
   --ppt-brand-strong: #3f94f4;
   --ppt-brand-soft: rgba(108, 183, 255, 0.16);
+  --ppt-marker-bg: linear-gradient(135deg, #7fc1ff 0%, #4ea1f6 100%);
+  --ppt-marker-border: rgba(245, 247, 251, 0.2);
+  --ppt-marker-text: #06111f;
+  --ppt-marker-shadow: 0 12px 24px rgba(2, 6, 23, 0.34);
+  --ppt-marker-ring: rgba(108, 183, 255, 0.34);
   --ppt-success-soft: rgba(74, 222, 128, 0.14);
   --ppt-success: #63d98b;
   --ppt-shadow: 0 24px 60px rgba(2, 6, 23, 0.55);
@@ -57,6 +62,11 @@
   --ppt-brand: #3578e5;
   --ppt-brand-strong: #235ec0;
   --ppt-brand-soft: rgba(53, 120, 229, 0.12);
+  --ppt-marker-bg: linear-gradient(135deg, #235ec0 0%, #3578e5 100%);
+  --ppt-marker-border: rgba(255, 255, 255, 0.88);
+  --ppt-marker-text: #f8fbff;
+  --ppt-marker-shadow: 0 12px 24px rgba(35, 94, 192, 0.28);
+  --ppt-marker-ring: rgba(53, 120, 229, 0.24);
   --ppt-success-soft: rgba(31, 143, 78, 0.12);
   --ppt-success: #1f8f4e;
   --ppt-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
@@ -79,6 +89,11 @@
   --ppt-brand: #6cb7ff;
   --ppt-brand-strong: #3f94f4;
   --ppt-brand-soft: rgba(108, 183, 255, 0.16);
+  --ppt-marker-bg: linear-gradient(135deg, #7fc1ff 0%, #4ea1f6 100%);
+  --ppt-marker-border: rgba(245, 247, 251, 0.2);
+  --ppt-marker-text: #06111f;
+  --ppt-marker-shadow: 0 12px 24px rgba(2, 6, 23, 0.34);
+  --ppt-marker-ring: rgba(108, 183, 255, 0.34);
   --ppt-success-soft: rgba(74, 222, 128, 0.14);
   --ppt-success: #63d98b;
   --ppt-shadow: 0 24px 60px rgba(2, 6, 23, 0.55);
@@ -125,11 +140,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(108, 183, 255, 0.42);
+  border: 1px solid var(--ppt-marker-border);
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
-  color: #06111f;
-  box-shadow: 0 12px 24px rgba(12, 74, 140, 0.34);
+  background: var(--ppt-marker-bg);
+  color: var(--ppt-marker-text);
+  box-shadow: var(--ppt-marker-shadow);
   font-family: var(--ppt-font-sans);
   font-size: 12px;
   font-weight: 800;
@@ -177,8 +192,8 @@
 }
 
 .ppt-toolbar-collapsed--active {
-  border-color: rgba(108, 183, 255, 0.34);
-  box-shadow: 0 18px 36px rgba(12, 74, 140, 0.28);
+  border-color: var(--ppt-marker-ring);
+  box-shadow: 0 18px 36px color-mix(in srgb, var(--ppt-brand-strong) 28%, transparent);
 }
 
 .ppt-toolbar-collapsed-brand {
@@ -853,7 +868,7 @@
   padding: 0 5px;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--ppt-brand) 0%, var(--ppt-brand-strong) 100%);
-  color: #06111f;
+  color: var(--ppt-marker-text);
   font-size: 10px;
   font-weight: 800;
   display: inline-flex;
