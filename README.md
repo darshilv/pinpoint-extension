@@ -2,6 +2,11 @@
 
 Pinpoint is a Manifest V3 Chrome extension for annotating UI elements and collecting feedback that can be turned into agent-ready prompts.
 
+## Repo Structure
+
+- `docs/` contains the public GitHub Pages site only.
+- `planning/` contains internal planning notes and Chrome Web Store submission docs.
+
 ## Local Chrome Testing
 
 ### Prerequisites
@@ -71,7 +76,7 @@ npm run cws:prepare
 That command:
 
 - validates the manifest and icons
-- generates submission docs in `docs/chrome-web-store/generated/`
+- generates submission docs in `planning/chrome-web-store/generated/`
 - writes metadata to `artifacts/chrome-web-store/`
 - packages `dist/` into a versioned ZIP for upload
 
@@ -91,8 +96,8 @@ This uses Playwright's bundled `chromium` channel so the extension can be side-l
 
 Core files for submission:
 
-- `docs/chrome-web-store/privacy-policy.md`
-- `docs/chrome-web-store/store-listing.md`
-- `docs/chrome-web-store/generated/reviewer-notes.md`
-- `docs/chrome-web-store/generated/submission-checklist.md`
-- `docs/chrome-web-store/submission-runbook.md`
+- `planning/chrome-web-store/privacy-policy.md`
+- `planning/chrome-web-store/store-listing.md`
+- `planning/chrome-web-store/generated/reviewer-notes.md`
+- `planning/chrome-web-store/generated/submission-checklist.md`
+- `planning/chrome-web-store/submission-runbook.md`

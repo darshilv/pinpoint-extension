@@ -21,10 +21,10 @@ That command will:
 ## Where to find the generated outputs
 
 - ZIP upload artifact: `artifacts/chrome-web-store/`
-- generated reviewer docs: `docs/chrome-web-store/generated/`
+- generated reviewer docs: `planning/chrome-web-store/generated/`
 - editable policy/listing source docs:
-  - `docs/chrome-web-store/privacy-policy.md`
-  - `docs/chrome-web-store/store-listing.md`
+  - `planning/chrome-web-store/privacy-policy.md`
+  - `planning/chrome-web-store/store-listing.md`
 
 ## Permission model to describe in review
 
@@ -43,9 +43,9 @@ Pinpoint does not request broad persistent access to all sites.
 3. Run `npm test` or at minimum the focused tests that cover the changed area.
 4. Run `npm run cws:prepare`.
 5. Review:
-   - `docs/chrome-web-store/generated/reviewer-notes.md`
-   - `docs/chrome-web-store/generated/store-listing-draft.md`
-   - `docs/chrome-web-store/generated/submission-checklist.md`
+   - `planning/chrome-web-store/generated/reviewer-notes.md`
+   - `planning/chrome-web-store/generated/store-listing-draft.md`
+   - `planning/chrome-web-store/generated/submission-checklist.md`
 6. Capture final screenshots for the store listing.
 7. Host the privacy policy at a public HTTPS URL.
 8. Upload the ZIP and listing assets in the Chrome Web Store dashboard.

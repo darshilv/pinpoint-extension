@@ -5,8 +5,8 @@ Generated on 2026-04-03T04:55:06.589Z from `public/manifest.json`.
 ## Ready in repo
 
 - [x] Manifest V3 extension with action, icons, background worker, and options page
-- [x] Draft privacy policy at `docs/chrome-web-store/privacy-policy.md`
-- [x] Store listing draft at `docs/chrome-web-store/store-listing.md`
+- [x] Draft privacy policy at `planning/chrome-web-store/privacy-policy.md`
+- [x] Store listing draft at `planning/chrome-web-store/store-listing.md`
 - [x] Reviewer notes generated from the current manifest
 - [x] Packaging script for a versioned ZIP
 - [ ] At least one final Chrome Web Store screenshot at 1280x800 or 640x400

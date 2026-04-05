@@ -2,17 +2,852 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=./chrome-web-store/privacy-policy.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pinpoint</title>
-    <script>
-      window.location.replace("./chrome-web-store/privacy-policy.html");
-    </script>
+    <meta
+      name="description"
+      content="Pinpoint lets you annotate live webpages, capture precise UI feedback, and turn review notes into implementation-ready prompts."
+    />
+    <title>Pinpoint | Annotate Live UI and Turn Feedback Into Prompts</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f4ee;
+        --bg-strong: #ebe6da;
+        --surface: rgba(255, 255, 255, 0.82);
+        --surface-strong: #fffdf7;
+        --text: #171717;
+        --muted: #5c5c56;
+        --border: rgba(23, 23, 23, 0.1);
+        --accent: #0b6b57;
+        --accent-strong: #094e40;
+        --accent-soft: #dff3eb;
+        --gold: #a66a00;
+        --shadow: 0 20px 60px rgba(41, 30, 7, 0.12);
+        --radius-xl: 28px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --max-width: 1180px;
+        font-family: Inter, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(11, 107, 87, 0.1), transparent 28%),
+          radial-gradient(circle at top right, rgba(166, 106, 0, 0.12), transparent 24%),
+          linear-gradient(180deg, #faf7f0 0%, var(--bg) 30%, #f4f1e8 100%);
+        line-height: 1.55;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      img {
+        max-width: 100%;
+        display: block;
+      }
+
+      .page-shell {
+        width: min(calc(100% - 32px), var(--max-width));
+        margin: 0 auto;
+      }
+
+      .topbar {
+        padding: 22px 0 8px;
+      }
+
+      .topbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        border: 1px solid var(--border);
+        background: rgba(255, 253, 247, 0.72);
+        backdrop-filter: blur(14px);
+        border-radius: 999px;
+        box-shadow: 0 10px 30px rgba(23, 23, 23, 0.05);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: linear-gradient(145deg, var(--accent) 0%, #0f8c72 100%);
+        color: #fff;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      }
+
+      .brand-mark svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .top-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .top-links a {
+        text-decoration: none;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        font-weight: 600;
+        transition:
+          transform 180ms ease,
+          box-shadow 180ms ease,
+          background-color 180ms ease;
+      }
+
+      .button:hover,
+      .button:focus-visible {
+        transform: translateY(-1px);
+      }
+
+      .button-primary {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent) 0%, #0a8269 100%);
+        box-shadow: 0 14px 32px rgba(11, 107, 87, 0.22);
+      }
+
+      .button-secondary {
+        border-color: var(--border);
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .hero {
+        padding: 36px 0 42px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+        gap: 32px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(11, 107, 87, 0.14);
+        color: var(--accent-strong);
+        font-size: 0.86rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+
+      h1 {
+        margin: 18px 0 18px;
+        font-size: clamp(3rem, 7vw, 5.7rem);
+        line-height: 0.96;
+        letter-spacing: -0.05em;
+      }
+
+      .hero-copy p {
+        margin: 0;
+        max-width: 640px;
+        color: var(--muted);
+        font-size: 1.1rem;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .hero-points {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .hero-points span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.68);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .mockup {
+        position: relative;
+        padding: 18px;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.65));
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        box-shadow: var(--shadow);
+      }
+
+      .mockup::before,
+      .mockup::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(10px);
+        z-index: -1;
+      }
+
+      .mockup::before {
+        width: 160px;
+        height: 160px;
+        right: -26px;
+        top: -20px;
+        background: rgba(11, 107, 87, 0.16);
+      }
+
+      .mockup::after {
+        width: 120px;
+        height: 120px;
+        left: -18px;
+        bottom: 12px;
+        background: rgba(166, 106, 0, 0.16);
+      }
+
+      .browser {
+        overflow: hidden;
+        border-radius: 22px;
+        border: 1px solid rgba(23, 23, 23, 0.08);
+        background: #fcfbf7;
+      }
+
+      .browser-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        background: #f1eee6;
+        border-bottom: 1px solid rgba(23, 23, 23, 0.08);
+      }
+
+      .browser-dots {
+        display: flex;
+        gap: 6px;
+      }
+
+      .browser-dots span {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #d5cfbf;
+      }
+
+      .browser-url {
+        flex: 1;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.75);
+        color: #706a5d;
+        font-size: 0.82rem;
+      }
+
+      .browser-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 240px;
+        gap: 0;
+        min-height: 470px;
+      }
+
+      .site-preview {
+        position: relative;
+        padding: 28px;
+        background:
+          linear-gradient(180deg, rgba(239, 246, 243, 0.82), rgba(250, 247, 240, 0.9)),
+          #fbfaf5;
+      }
+
+      .site-card {
+        border-radius: 24px;
+        padding: 24px;
+        border: 1px solid rgba(23, 23, 23, 0.08);
+        background: rgba(255, 255, 255, 0.84);
+        box-shadow: 0 14px 30px rgba(23, 23, 23, 0.05);
+      }
+
+      .site-card h2 {
+        margin: 0 0 10px;
+        font-size: 1.55rem;
+        letter-spacing: -0.03em;
+      }
+
+      .site-card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .mini-block {
+        min-height: 92px;
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(23, 23, 23, 0.08);
+        background: linear-gradient(180deg, #fffef9 0%, #f3efe5 100%);
+      }
+
+      .mini-block strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .annotation {
+        position: absolute;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: #fff;
+        border: 1px solid rgba(11, 107, 87, 0.18);
+        box-shadow: 0 12px 30px rgba(11, 107, 87, 0.13);
+        max-width: 220px;
+        font-size: 0.84rem;
+      }
+
+      .annotation strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--accent-strong);
+      }
+
+      .annotation-one {
+        top: 160px;
+        right: 34px;
+      }
+
+      .annotation-two {
+        bottom: 48px;
+        left: 46px;
+      }
+
+      .marker {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--gold), #d79015);
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 14px 24px rgba(166, 106, 0, 0.22);
+      }
+
+      .marker-one {
+        top: 136px;
+        right: 170px;
+      }
+
+      .marker-two {
+        left: 176px;
+        bottom: 104px;
+      }
+
+      .side-panel {
+        padding: 18px;
+        border-left: 1px solid rgba(23, 23, 23, 0.08);
+        background: linear-gradient(180deg, #fffdf8 0%, #f7f3e9 100%);
+      }
+
+      .panel-card {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(23, 23, 23, 0.08);
+      }
+
+      .panel-card + .panel-card {
+        margin-top: 12px;
+      }
+
+      .panel-label {
+        margin: 0 0 6px;
+        font-size: 0.78rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .panel-card h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .panel-card p,
+      .panel-card li {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .panel-card ul {
+        padding-left: 18px;
+      }
+
+      .section {
+        padding: 26px 0 18px;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .section-heading h2 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 2.9rem);
+        letter-spacing: -0.04em;
+      }
+
+      .section-heading p {
+        margin: 0;
+        max-width: 540px;
+        color: var(--muted);
+      }
+
+      .value-grid,
+      .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        padding: 22px;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 14px 30px rgba(23, 23, 23, 0.05);
+      }
+
+      .card-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-weight: 700;
+        margin-bottom: 14px;
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 1.2rem;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .quote {
+        margin-top: 26px;
+        padding: 28px;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, #0f3b34 0%, #125d4d 100%);
+        color: #f5fff9;
+        box-shadow: 0 20px 44px rgba(15, 59, 52, 0.2);
+      }
+
+      .quote p {
+        margin: 0;
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        line-height: 1.4;
+        letter-spacing: -0.02em;
+      }
+
+      .quote strong {
+        color: #bff6e0;
+      }
+
+      .footer {
+        padding: 44px 0 56px;
+      }
+
+      .footer-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 24px;
+        border-radius: var(--radius-xl);
+        background: var(--surface-strong);
+        border: 1px solid var(--border);
+        box-shadow: 0 14px 30px rgba(23, 23, 23, 0.05);
+      }
+
+      .footer-copy h2 {
+        margin: 0 0 8px;
+        font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+        letter-spacing: -0.03em;
+      }
+
+      .footer-copy p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .footer-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .meta-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .meta-links a {
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.18em;
+      }
+
+      @media (max-width: 1080px) {
+        .hero-grid,
+        .browser-content,
+        .value-grid,
+        .steps-grid,
+        .footer-card {
+          grid-template-columns: 1fr;
+        }
+
+        .side-panel {
+          border-left: 0;
+          border-top: 1px solid rgba(23, 23, 23, 0.08);
+        }
+      }
+
+      @media (max-width: 760px) {
+        .topbar-inner,
+        .section-heading,
+        .footer-card {
+          align-items: flex-start;
+        }
+
+        .topbar-inner,
+        .section-heading,
+        .footer-card {
+          flex-direction: column;
+        }
+
+        .hero {
+          padding-top: 20px;
+        }
+
+        h1 {
+          font-size: clamp(2.7rem, 16vw, 4.3rem);
+        }
+
+        .site-preview,
+        .side-panel,
+        .card,
+        .quote,
+        .footer-card {
+          padding: 20px;
+        }
+
+        .mini-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .annotation {
+          position: static;
+          margin-top: 14px;
+          max-width: none;
+        }
+
+        .marker {
+          display: none;
+        }
+
+        .mockup {
+          padding: 12px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <p>
-      Redirecting to the Pinpoint privacy policy.
-      <a href="./chrome-web-store/privacy-policy.html">Continue</a>
-    </p>
+    <header class="topbar">
+      <div class="page-shell topbar-inner">
+        <a class="brand" href="#top" aria-label="Pinpoint home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l6.5 6.5L12 21l-6.5-11.5L12 3z" />
+              <path d="M12 8v6" />
+            </svg>
+          </span>
+          <span>Pinpoint</span>
+        </a>
+        <nav class="top-links" aria-label="Primary">
+          <a href="#how-it-works">How it works</a>
+          <a href="#why-pinpoint">Why Pinpoint</a>
+          <a href="./privacy.html">Privacy policy</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="page-shell hero-grid">
+          <div class="hero-copy">
+            <span class="eyebrow">Chrome extension for live webpage review</span>
+            <h1>Annotate the UI you mean, not the screenshot you hope they understand.</h1>
+            <p>
+              Pinpoint helps you click the exact element on a live webpage, attach the
+              change you want, and copy the open feedback into an implementation-ready
+              prompt for engineers or coding agents.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#how-it-works">See the workflow</a>
+              <a class="button button-secondary" href="./privacy.html">
+                Read privacy policy
+              </a>
+            </div>
+            <div class="hero-points" aria-label="Highlights">
+              <span>Precise UI annotations</span>
+              <span>Built for QA and handoff</span>
+              <span>Prompt-ready output</span>
+            </div>
+          </div>
+
+          <div class="mockup" aria-label="Pinpoint workflow preview">
+            <div class="browser">
+              <div class="browser-bar">
+                <div class="browser-dots" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="browser-url">https://example-product.com/pricing</div>
+              </div>
+
+              <div class="browser-content">
+                <div class="site-preview">
+                  <div class="site-card">
+                    <h2>Upgrade without friction</h2>
+                    <p>
+                      Clear pricing, clear permissions, and a path that explains what
+                      happens next.
+                    </p>
+                    <div class="mini-grid">
+                      <div class="mini-block">
+                        <strong>Starter</strong>
+                        Keep the page lightweight and direct.
+                      </div>
+                      <div class="mini-block">
+                        <strong>Growth</strong>
+                        Make the decision path easier to scan.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="marker marker-one">1</div>
+                  <div class="annotation annotation-one">
+                    <strong>CTA clarity</strong>
+                    Button text should explain the next step, not just say "Continue".
+                  </div>
+
+                  <div class="marker marker-two">2</div>
+                  <div class="annotation annotation-two">
+                    <strong>Hierarchy fix</strong>
+                    Price should stand out first. Supporting copy can be quieter.
+                  </div>
+                </div>
+
+                <aside class="side-panel">
+                  <div class="panel-card">
+                    <p class="panel-label">Open note</p>
+                    <h3>Pinpoint keeps feedback attached to the exact surface.</h3>
+                    <p>
+                      Review notes stay grounded in the live page, which makes the handoff
+                      easier to act on.
+                    </p>
+                  </div>
+                  <div class="panel-card">
+                    <p class="panel-label">Copied prompt</p>
+                    <ul>
+                      <li>Clarify the primary CTA copy.</li>
+                      <li>Increase visual emphasis on pricing.</li>
+                      <li>Keep the supporting text secondary.</li>
+                    </ul>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="why-pinpoint">
+        <div class="page-shell">
+          <div class="section-heading">
+            <h2>Built for fast review loops, not vague feedback.</h2>
+            <p>
+              Pinpoint is for moments when "the hero feels off" is not enough. It gives
+              you a quicker way to collect precise page feedback and turn it into work
+              someone can actually implement.
+            </p>
+          </div>
+
+          <div class="value-grid">
+            <article class="card">
+              <div class="card-number">1</div>
+              <h3>Point at the real element</h3>
+              <p>
+                Review the live page itself, click the UI you want to discuss, and attach
+                feedback where it belongs.
+              </p>
+            </article>
+
+            <article class="card">
+              <div class="card-number">2</div>
+              <h3>Keep handoff friction low</h3>
+              <p>
+                Notes stay concise and anchored, which makes them easier for an engineer,
+                designer, or coding agent to understand quickly.
+              </p>
+            </article>
+
+            <article class="card">
+              <div class="card-number">3</div>
+              <h3>Turn review into action</h3>
+              <p>
+                Copy the open notes into a clean prompt so the next step is implementation,
+                not cleanup.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="how-it-works">
+        <div class="page-shell">
+          <div class="section-heading">
+            <h2>How the workflow works</h2>
+            <p>
+              Pinpoint stays intentionally narrow. It is a focused tool for design QA, bug
+              review, implementation handoff, and prompt creation on real webpages.
+            </p>
+          </div>
+
+          <div class="steps-grid">
+            <article class="card">
+              <div class="card-number">1</div>
+              <h3>Activate review mode</h3>
+              <p>
+                Open Pinpoint from the toolbar or shortcut when you are on the page you
+                want to review.
+              </p>
+            </article>
+
+            <article class="card">
+              <div class="card-number">2</div>
+              <h3>Click and annotate</h3>
+              <p>
+                Select the exact UI element and leave a tight note about the intended
+                change, bug, or refinement.
+              </p>
+            </article>
+
+            <article class="card">
+              <div class="card-number">3</div>
+              <h3>Copy implementation-ready notes</h3>
+              <p>
+                Review open items, resolve finished work, and copy the remaining feedback
+                into a prompt that is ready to hand off.
+              </p>
+            </article>
+          </div>
+
+          <div class="quote">
+            <p>
+              Instead of collecting scattered comments, screenshots, and follow-up
+              messages, <strong>Pinpoint turns one review pass into a clearer build
+              request.</strong>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="page-shell">
+        <div class="footer-card">
+          <div class="footer-copy">
+            <h2>Pinpoint keeps webpage feedback specific and actionable.</h2>
+            <p>
+              A lightweight homepage for a focused extension. No backend, no bloated
+              platform story, just the core value and a clear path to trust information.
+            </p>
+            <div class="meta-links">
+              <a href="./privacy.html">Privacy policy</a>
+              <a href="mailto:ztnbqfspcs@privaterelay.appleid.com">Support</a>
+            </div>
+          </div>
+
+          <div class="footer-actions">
+            <a class="button button-primary" href="#top">Back to top</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

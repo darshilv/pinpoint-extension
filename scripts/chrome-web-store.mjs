@@ -6,7 +6,7 @@ const rootDir = process.cwd();
 const publicManifestPath = path.join(rootDir, 'public', 'manifest.json');
 const distDir = path.join(rootDir, 'dist');
 const distManifestPath = path.join(distDir, 'manifest.json');
-const docsDir = path.join(rootDir, 'docs', 'chrome-web-store');
+const docsDir = path.join(rootDir, 'planning', 'chrome-web-store');
 const generatedDocsDir = path.join(docsDir, 'generated');
 const artifactsDir = path.join(rootDir, 'artifacts', 'chrome-web-store');
 const screenshotsDir = path.join(artifactsDir, 'screenshots');
@@ -78,7 +78,7 @@ function getWarnings(manifest) {
       'No optional host permissions declared. Per-site persistence requests will not work.'
     );
   if (!fileExists(path.join(docsDir, 'privacy-policy.md'))) {
-    warnings.push('Missing `docs/chrome-web-store/privacy-policy.md`.');
+    warnings.push('Missing `planning/chrome-web-store/privacy-policy.md`.');
   }
   if (
     !fs.existsSync(screenshotsDir) ||
@@ -128,8 +128,8 @@ Generated on ${new Date().toISOString()} from \`public/manifest.json\`.
 ## Ready in repo
 
 - [x] Manifest V3 extension with action, icons, background worker, and options page
-- [x] Draft privacy policy at \`docs/chrome-web-store/privacy-policy.md\`
-- [x] Store listing draft at \`docs/chrome-web-store/store-listing.md\`
+- [x] Draft privacy policy at \`planning/chrome-web-store/privacy-policy.md\`
+- [x] Store listing draft at \`planning/chrome-web-store/store-listing.md\`
 - [x] Reviewer notes generated from the current manifest
 - [x] Packaging script for a versioned ZIP
 - [ ] At least one final Chrome Web Store screenshot at 1280x800 or 640x400
