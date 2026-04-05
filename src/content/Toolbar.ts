@@ -2,14 +2,13 @@ import type { Annotation, PinpointMode } from '../types';
 import { annotationToMarkdown, annotationsToMarkdown } from '../utils/markdown';
 import { getAnnotations, saveAnnotations } from '../utils/storage';
 import { EVENTS, PPT_PREFIX } from './constants';
-
-type ToolbarTheme = 'light' | 'dark';
-type ReviewTab = 'active' | 'history';
-
-interface HistoryGroup {
-  copiedAt: number;
-  annotations: Annotation[];
-}
+import {
+  type HistoryGroup,
+  type ReviewTab,
+  type ToolbarTheme,
+  getToolbarClassName,
+  renderToolbar,
+} from './toolbarView';
 
 const THEME_STORAGE_KEY = 'pinpoint:theme';
 
@@ -37,6 +36,9 @@ export class Toolbar {
     this.#el = document.createElement('div');
     this.#el.className = `${PPT_PREFIX}toolbar`;
     document.body.appendChild(this.#el);
+    this.#el.addEventListener('click', (event) => {
+      void this.#handleClick(event);
+    });
     this.#onKeyDown = (e) => this.#handleKeyDown(e);
     document.addEventListener('keydown', this.#onKeyDown);
     this.#render();
@@ -288,328 +290,103 @@ export class Toolbar {
     const showExpandedCopy = anchorActive;
     const shouldDisableExpandedCopy = !hasActiveAnnotations && !isCopySuccessVisible;
 
-    this.#el.className = [
-      `${PPT_PREFIX}toolbar`,
-      `${PPT_PREFIX}theme-${this.#theme}`,
-      anchorActive ? `${PPT_PREFIX}toolbar--active` : `${PPT_PREFIX}toolbar--inactive`,
-      selecting ? `${PPT_PREFIX}toolbar--selecting` : '',
-      reviewOpen ? `${PPT_PREFIX}toolbar--review-open` : '',
-      helpOpen ? `${PPT_PREFIX}toolbar--help-open` : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
+    const viewState = {
+      active,
+      historyGroups,
+      historyCount,
+      hasAttention,
+      reviewOpen,
+      selecting,
+      anchorActive,
+      helpOpen,
+      isCopySuccessVisible,
+      hasActiveAnnotations,
+      showCollapsedCopy,
+      showExpandedCopy,
+      shouldDisableExpandedCopy,
+      copyOneFeedbackId: this.#copyOneFeedbackId,
+      mode: this.#mode,
+      tab: this.#tab,
+      theme: this.#theme,
+    };
 
-    const activeNumberById = new Map(active.map((annotation, index) => [annotation.id, index + 1]));
-    const globalCopyIcon =
-      this.#copyAllFeedback === 'copied'
-        ? `
-      <svg class="${PPT_PREFIX}toolbar-header-button-icon" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M3.5 8.2 6.4 11l6.1-6.4" />
-      </svg>
-    `
-        : `
-      <svg class="${PPT_PREFIX}toolbar-header-button-icon" viewBox="0 0 16 16" aria-hidden="true">
-        <rect x="5.2" y="3.2" width="7.3" height="9.3" rx="1.6" />
-        <path d="M9.8 3.2V2.5a1 1 0 0 0-1-1H3.5a1 1 0 0 0-1 1v7.3a1 1 0 0 0 1 1h.7" />
-      </svg>
-    `;
-    const globalCopyTitle = hasActiveAnnotations ? 'Copy active annotations' : 'Nothing to copy';
-    const reviewIcon = `
-      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M5 5.5h10M5 10h10M5 14.5h6" />
-      </svg>
-    `;
-    const helpIcon = `
-      <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M7.5 7.2a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 4" />
-        <path d="M10 14.9h.01" />
-      </svg>
-    `;
-    const themeIcon =
-      this.#theme === 'dark'
-        ? `
-        <svg class="${PPT_PREFIX}theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path class="${PPT_PREFIX}theme-toggle-moon" d="M15.5 4.5a7.5 7.5 0 1 0 4 13.85A8.5 8.5 0 1 1 15.5 4.5z" />
-        </svg>
-      `
-        : `
-        <svg class="${PPT_PREFIX}theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <circle class="${PPT_PREFIX}theme-toggle-sun-ring" cx="12" cy="12" r="5.25" />
-          <path class="${PPT_PREFIX}theme-toggle-sun-rays" d="M12 3.25v2.1M12 18.65v2.1M3.25 12h2.1M18.65 12h2.1M5.82 5.82l1.49 1.49M16.69 16.69l1.49 1.49M5.82 18.18l1.49-1.49M16.69 7.31l1.49-1.49" />
-        </svg>
-      `;
-    const renderItems = (annotations: Annotation[]) =>
-      annotations
-        .map((annotation) => {
-          const showCopyOneFeedback = this.#copyOneFeedbackId === annotation.id;
-          const copyOneIcon = showCopyOneFeedback
-            ? `
-          <svg class="${PPT_PREFIX}toolbar-header-button-icon" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M3.5 8.2 6.4 11l6.1-6.4" />
-          </svg>
-        `
-            : '';
+    this.#el.className = getToolbarClassName(viewState);
+    this.#el.innerHTML = renderToolbar(viewState, (timestamp) => this.#formatHistoryTimestamp(timestamp));
+  }
 
-          return `
-      <li class="${PPT_PREFIX}annotation-item" data-id="${annotation.id}">
-        <div class="${PPT_PREFIX}item-meta">
-          <span class="${PPT_PREFIX}item-element">${annotation.selector}</span>
-          <div class="${PPT_PREFIX}item-meta-badges">
-            ${
-              annotation.status === 'active'
-                ? `<span class="${PPT_PREFIX}item-note-number">Note ${activeNumberById.get(annotation.id)}</span>`
-                : ''
-            }
-            ${
-              annotation.status === 'active'
-                ? `<span class="${PPT_PREFIX}item-badge">Open</span>`
-                : ''
-            }
-          </div>
-        </div>
-        ${
-          annotation.surface && annotation.surface.kind !== 'page'
-            ? `
-          <div class="${PPT_PREFIX}item-surface-row">
-            <span class="${PPT_PREFIX}item-surface ${annotation.surface.kind === 'dialog' ? `${PPT_PREFIX}item-surface--dialog` : ''}">${annotation.surface.label}</span>
-          </div>
-        `
-            : ''
-        }
-        <span class="${PPT_PREFIX}item-comment">${annotation.feedback}</span>
-        <span class="${PPT_PREFIX}item-context">${annotation.context || annotation.path}</span>
-        <div class="${PPT_PREFIX}item-actions">
-          ${
-            annotation.status === 'active'
-              ? `<button class="${PPT_PREFIX}copy-one" data-id="${annotation.id}">Copy</button>`
-              : `<button class="${PPT_PREFIX}copy-one ${showCopyOneFeedback ? `${PPT_PREFIX}copy-one--success` : ''}" data-id="${annotation.id}">${copyOneIcon}<span>${showCopyOneFeedback ? 'Copied' : 'Copy again'}</span></button>`
-          }
-        </div>
-      </li>
-    `
-        })
-        .join('');
+  async #handleClick(event: Event): Promise<void> {
+    if (!this.#el) return;
 
-    this.#el.innerHTML = `
-      <div class="${PPT_PREFIX}anchor-shell ${anchorActive || hasAttention ? `${PPT_PREFIX}anchor-shell--active` : ''}">
-        ${
-          showCollapsedCopy
-            ? `
-          <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--collapsed ${isCopySuccessVisible ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}">
-            ${globalCopyIcon}
-            ${hasActiveAnnotations ? `<span class="${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
-          </button>
-        `
-            : ''
-        }
-        ${
-          anchorActive
-            ? `
-          <div class="${PPT_PREFIX}anchor-actions" aria-label="Pinpoint actions">
-            ${
-              showExpandedCopy
-                ? `
-              <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--expanded ${isCopySuccessVisible ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}" ${shouldDisableExpandedCopy ? 'disabled' : ''}>
-                ${globalCopyIcon}
-                ${hasActiveAnnotations ? `<span class="${PPT_PREFIX}anchor-action-badge ${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
-              </button>
-            `
-                : ''
-            }
-            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${reviewOpen ? 'Close review panel' : 'Open review panel'}" title="Review">
-              ${reviewIcon}
-            </button>
-            <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${helpOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${helpOpen ? 'Close help panel' : 'Open help panel'}" title="Help">
-              ${helpIcon}
-            </button>
-            <button class="${PPT_PREFIX}theme-toggle" type="button" aria-label="Switch to ${this.#theme === 'dark' ? 'light' : 'dark'} theme" title="${this.#theme === 'dark' ? 'Dark theme' : 'Light theme'}">
-              ${themeIcon}
-            </button>
-          </div>
-        `
-            : ''
-        }
-        <button class="${PPT_PREFIX}anchor-button" type="button" data-state="${this.#anchorButtonState()}" aria-label="${this.#anchorButtonLabel()}">
-          <svg class="${PPT_PREFIX}anchor-button-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--top" d="M7 9h10" />
-            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--bottom" d="M7 15h10" />
-            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--vertical" d="M12 7v10" />
-          </svg>
-        </button>
-        ${
-          helpOpen
-            ? `
-          <div class="${PPT_PREFIX}help-panel" aria-label="Pinpoint shortcuts">
-            <div class="${PPT_PREFIX}help-panel-header">
-              <span class="${PPT_PREFIX}help-panel-title">Shortcuts</span>
-              <span class="${PPT_PREFIX}help-panel-subtitle">Move faster without leaving the page.</span>
-            </div>
-            <ul class="${PPT_PREFIX}help-list">
-              <li class="${PPT_PREFIX}help-item">
-                <span class="${PPT_PREFIX}help-item-label">Toggle selection mode</span>
-                <kbd class="${PPT_PREFIX}help-kbd">⌥V</kbd>
-              </li>
-              <li class="${PPT_PREFIX}help-item">
-                <span class="${PPT_PREFIX}help-item-label">Leave review</span>
-                <kbd class="${PPT_PREFIX}help-kbd">H</kbd>
-              </li>
-              <li class="${PPT_PREFIX}help-item">
-                <span class="${PPT_PREFIX}help-item-label">Copy prompt</span>
-                <kbd class="${PPT_PREFIX}help-kbd">C</kbd>
-              </li>
-              <li class="${PPT_PREFIX}help-item">
-                <span class="${PPT_PREFIX}help-item-label">Clear active notes</span>
-                <kbd class="${PPT_PREFIX}help-kbd">D</kbd>
-              </li>
-            </ul>
-          </div>
-        `
-            : ''
-        }
-      </div>
-      ${
-        reviewOpen
-          ? `
-        <aside class="${PPT_PREFIX}review-panel" aria-label="Pinpoint review panel">
-          <div class="${PPT_PREFIX}toolbar-header">
-            <div class="${PPT_PREFIX}toolbar-brand">
-              <h2 class="${PPT_PREFIX}toolbar-title">Pinpoint</h2>
-              <p class="${PPT_PREFIX}toolbar-status">${active.length} active note${active.length === 1 ? '' : 's'}</p>
-            </div>
-            <div class="${PPT_PREFIX}toolbar-header-actions">
-              <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}copy-all ${isCopySuccessVisible ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}" ${shouldDisableExpandedCopy ? 'disabled' : ''}>
-                ${globalCopyIcon}
-                ${hasActiveAnnotations ? `<span class="${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
-              </button>
-              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}clear-active" ${active.length === 0 ? 'disabled' : ''}>Clear</button>
-              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}toolbar-minimize ${PPT_PREFIX}toolbar-header-button--icon" type="button" aria-label="Close review panel">×</button>
-            </div>
-          </div>
-          <div class="${PPT_PREFIX}review-tabs" role="tablist" aria-label="Review sections">
-            <button class="${PPT_PREFIX}review-tab ${this.#tab === 'active' ? `${PPT_PREFIX}review-tab--active` : ''}" type="button" role="tab" aria-selected="${this.#tab === 'active'}" data-tab="active">
-              <span>Active</span>
-              <span class="${PPT_PREFIX}section-count">${active.length}</span>
-            </button>
-            <button class="${PPT_PREFIX}review-tab ${this.#tab === 'history' ? `${PPT_PREFIX}review-tab--active` : ''}" type="button" role="tab" aria-selected="${this.#tab === 'history'}" data-tab="history">
-              <span>History</span>
-              <span class="${PPT_PREFIX}section-count">${historyCount}</span>
-            </button>
-          </div>
-          <ul class="${PPT_PREFIX}list">
-            ${
-              this.#tab === 'active'
-                ? active.length === 0
-                  ? `
-              <li class="${PPT_PREFIX}empty">
-                <div class="${PPT_PREFIX}empty-illustration"></div>
-                <h3 class="${PPT_PREFIX}empty-title">Start collecting feedback</h3>
-                <p class="${PPT_PREFIX}empty-body">Activate Pinpoint and click any element to add a note.</p>
-              </li>
-            `
-                  : `
-              <li class="${PPT_PREFIX}section">
-                <div class="${PPT_PREFIX}section-header">
-                  <span class="${PPT_PREFIX}section-title">Active</span>
-                  <span class="${PPT_PREFIX}section-count">${active.length}</span>
-                </div>
-                <ul class="${PPT_PREFIX}section-list">
-                  ${renderItems(active)}
-                </ul>
-              </li>
-            `
-                : historyCount === 0
-                  ? `
-              <li class="${PPT_PREFIX}empty">
-                <div class="${PPT_PREFIX}empty-illustration"></div>
-                <h3 class="${PPT_PREFIX}empty-title">No copied history yet</h3>
-                <p class="${PPT_PREFIX}empty-body">Copied notes will appear here in timestamped groups.</p>
-              </li>
-            `
-                  : historyGroups
-                      .map(
-                        (group) => `
-              <li class="${PPT_PREFIX}section ${PPT_PREFIX}history-group" data-copied-at="${group.copiedAt}">
-                <div class="${PPT_PREFIX}section-header">
-                  <div class="${PPT_PREFIX}section-header-copy">
-                    <span class="${PPT_PREFIX}section-title">${this.#formatHistoryTimestamp(group.copiedAt)}</span>
-                    <span class="${PPT_PREFIX}section-subtitle">${group.annotations.length} annotation${group.annotations.length === 1 ? '' : 's'}</span>
-                  </div>
-                  <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}history-copy" type="button" aria-label="Copy this history group" title="Copy this history group">
-                    ${globalCopyIcon}
-                    <span class="${PPT_PREFIX}anchor-copy-badge">${group.annotations.length}</span>
-                  </button>
-                </div>
-                <ul class="${PPT_PREFIX}section-list">
-                  ${renderItems(group.annotations)}
-                </ul>
-              </li>
-            `
-                      )
-                      .join('')
-            }
-          </ul>
-        </aside>
-      `
-          : ''
-      }
-    `;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest('button');
+    if (!(button instanceof HTMLButtonElement) || !this.#el.contains(button)) return;
 
-    this.#el
-      .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}anchor-button`)
-      ?.addEventListener('click', () => {
-        this.#toggleAnchorMode();
-      });
-    this.#el
-      .querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-copy`)
-      .forEach((button) => button.addEventListener('click', () => void this.copyAll()));
-    this.#el
-      .querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[0]
-      ?.addEventListener('click', () => {
-        if (reviewOpen) {
+    if (button.matches(`.${PPT_PREFIX}anchor-button`)) {
+      this.#toggleAnchorMode();
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}theme-toggle`)) {
+      event.preventDefault();
+      event.stopPropagation();
+      await this.#toggleTheme();
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}toolbar-minimize`)) {
+      this.#requestMode('active-select');
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}clear-active`)) {
+      await this.#clearActive();
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}review-tab`)) {
+      this.#tab = button.dataset.tab as ReviewTab;
+      this.#render();
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}copy-one`)) {
+      const id = button.dataset.id;
+      if (id) await this.copyOne(id);
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}history-copy`)) {
+      const copiedAt = Number(
+        button.closest(`.${PPT_PREFIX}history-group`)?.getAttribute('data-copied-at')
+      );
+      if (!Number.isNaN(copiedAt)) await this.copyHistoryGroup(copiedAt);
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}anchor-copy`)) {
+      if (!button.disabled) await this.copyAll();
+      return;
+    }
+
+    if (button.matches(`.${PPT_PREFIX}anchor-action`)) {
+      const actions = Array.from(
+        this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)
+      );
+      const actionIndex = actions.indexOf(button);
+      if (actionIndex === 0) {
+        if (this.#mode === 'active-review') {
           this.#requestMode('active-select');
           return;
         }
         this.#requestReview();
-      });
-    this.#el
-      .querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[1]
-      ?.addEventListener('click', () => {
+        return;
+      }
+
+      if (actionIndex === 1) {
         this.#toggleHelp();
-      });
-    this.#el
-      .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}theme-toggle`)
-      ?.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void this.#toggleTheme();
-      });
-    this.#el
-      .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}toolbar-minimize`)
-      ?.addEventListener('click', () => {
-        this.#requestMode('active-select');
-      });
-    this.#el
-      .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}copy-all`)
-      ?.addEventListener('click', () => void this.copyAll());
-    this.#el
-      .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}clear-active`)
-      ?.addEventListener('click', () => void this.#clearActive());
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}review-tab`).forEach((button) => {
-      button.addEventListener('click', () => {
-        this.#tab = button.dataset.tab as ReviewTab;
-        this.#render();
-      });
-    });
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}copy-one`).forEach((button) => {
-      button.addEventListener('click', (e) =>
-        void this.copyOne((e.currentTarget as HTMLButtonElement).dataset.id!)
-      );
-    });
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}history-copy`).forEach((button) => {
-      button.addEventListener('click', () =>
-        void this.copyHistoryGroup(Number(button.closest(`.${PPT_PREFIX}history-group`)?.getAttribute('data-copied-at')))
-      );
-    });
+      }
+    }
   }
 
   async #clearActive(): Promise<void> {
