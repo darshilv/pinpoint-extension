@@ -244,8 +244,11 @@ export class Toolbar {
     const selecting = this.#mode === 'active-select';
     const anchorActive = this.#mode !== 'inactive';
     const helpOpen = anchorActive && this.#helpOpen;
-    const showCollapsedCopy = !anchorActive && active.length > 0;
+    const isCopySuccessVisible = this.#copyAllFeedback === 'copied';
+    const hasActiveAnnotations = active.length > 0;
+    const showCollapsedCopy = !anchorActive && (hasActiveAnnotations || isCopySuccessVisible);
     const showExpandedCopy = anchorActive;
+    const shouldDisableExpandedCopy = !hasActiveAnnotations && !isCopySuccessVisible;
 
     this.#el.className = [
       `${PPT_PREFIX}toolbar`,
@@ -272,8 +275,7 @@ export class Toolbar {
         <path d="M9.8 3.2V2.5a1 1 0 0 0-1-1H3.5a1 1 0 0 0-1 1v7.3a1 1 0 0 0 1 1h.7" />
       </svg>
     `;
-    const globalCopyLabel = this.#copyAllFeedback === 'copied' ? 'Copied' : 'Copy';
-    const globalCopyTitle = active.length > 0 ? 'Copy active annotations' : 'Nothing to copy';
+    const globalCopyTitle = hasActiveAnnotations ? 'Copy active annotations' : 'Nothing to copy';
     const reviewIcon = `
       <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
         <path d="M5 5.5h10M5 10h10M5 14.5h6" />
@@ -344,9 +346,9 @@ export class Toolbar {
         ${
           showCollapsedCopy
             ? `
-          <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--collapsed ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}">
+          <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--collapsed ${isCopySuccessVisible ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}">
             ${globalCopyIcon}
-            <span class="${PPT_PREFIX}anchor-copy-badge">${active.length}</span>
+            ${hasActiveAnnotations ? `<span class="${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
           </button>
         `
             : ''
@@ -358,17 +360,15 @@ export class Toolbar {
             ${
               showExpandedCopy
                 ? `
-              <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--expanded ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}" ${active.length === 0 ? 'disabled' : ''}>
+              <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--expanded ${isCopySuccessVisible ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}" ${shouldDisableExpandedCopy ? 'disabled' : ''}>
                 ${globalCopyIcon}
-                <span class="${PPT_PREFIX}anchor-copy-label">${globalCopyLabel}</span>
-                ${active.length > 0 ? `<span class="${PPT_PREFIX}anchor-action-badge ${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
+                ${hasActiveAnnotations ? `<span class="${PPT_PREFIX}anchor-action-badge ${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
               </button>
             `
                 : ''
             }
             <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${reviewOpen ? 'Close review panel' : 'Open review panel'}" title="Review">
               ${reviewIcon}
-              ${hasAttention ? `<span class="${PPT_PREFIX}anchor-action-badge">${active.length}</span>` : ''}
             </button>
             <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${helpOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${helpOpen ? 'Close help panel' : 'Open help panel'}" title="Help">
               ${helpIcon}
@@ -386,7 +386,6 @@ export class Toolbar {
             <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--bottom" d="M7 15h10" />
             <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--vertical" d="M12 7v10" />
           </svg>
-          ${hasAttention ? `<span class="${PPT_PREFIX}anchor-badge ${anchorActive ? `${PPT_PREFIX}anchor-badge--hidden` : ''}">${active.length}</span>` : ''}
         </button>
         ${
           helpOpen

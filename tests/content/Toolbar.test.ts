@@ -46,6 +46,7 @@ describe('Toolbar', () => {
 
     expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--collapsed`)).not.toBeNull();
     expect(document.querySelector(`.${PPT_PREFIX}anchor-copy-badge`)?.textContent).toBe('1');
+    expect(document.querySelector(`.${PPT_PREFIX}anchor-badge`)).toBeNull();
   });
 
   it('restores persisted annotations from storage on mount', async () => {
@@ -75,6 +76,18 @@ describe('Toolbar', () => {
       expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(
         `${PPT_PREFIX}toolbar--active`
       );
+    });
+
+    it('keeps the expanded copy button icon-only and uses its badge for count', async () => {
+      await toolbar.addAnnotation(makeAnnotation());
+      toolbar.setMode('active-select');
+
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-copy-label`)).toBeNull();
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.textContent?.trim()).toBe(
+        '1'
+      );
+      expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action-badge`).length).toBe(1);
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-badge`)).toBeNull();
     });
 
     it('shows the side review panel in active-review mode', async () => {
@@ -123,6 +136,22 @@ describe('Toolbar', () => {
   });
 
   describe('copy flows', () => {
+    it('keeps the collapsed copy button visible in success state after copying', async () => {
+      const writeMock = vi.fn(async () => {});
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeMock },
+        configurable: true,
+      });
+
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Collapsed copy feedback' }));
+      document.querySelector(`.${PPT_PREFIX}anchor-copy--collapsed`)?.click();
+      await Promise.resolve();
+
+      const collapsedCopy = document.querySelector(`.${PPT_PREFIX}anchor-copy--collapsed`);
+      expect(collapsedCopy).not.toBeNull();
+      expect(collapsedCopy?.className).toContain(`${PPT_PREFIX}anchor-copy--success`);
+    });
+
     it('writes active annotations as markdown to clipboard and moves them into history', async () => {
       const writeMock = vi.fn(async () => {});
       Object.defineProperty(navigator, 'clipboard', {
@@ -196,6 +225,24 @@ describe('Toolbar', () => {
       expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.className).toContain(
         `${PPT_PREFIX}anchor-copy--success`
       );
+    });
+
+    it('keeps the expanded copy button enabled during the success state', async () => {
+      const writeMock = vi.fn(async () => {});
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeMock },
+        configurable: true,
+      });
+
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Expanded success feedback' }));
+      toolbar.setMode('active-select');
+      document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.click();
+      await Promise.resolve();
+
+      const expandedCopy = document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`);
+      expect(expandedCopy).not.toBeNull();
+      expect(expandedCopy?.className).toContain(`${PPT_PREFIX}anchor-copy--success`);
+      expect(expandedCopy?.hasAttribute('disabled')).toBe(false);
     });
   });
 

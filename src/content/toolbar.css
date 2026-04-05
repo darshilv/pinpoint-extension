@@ -436,10 +436,9 @@
 }
 
 .ppt-anchor-copy--expanded {
-  width: auto;
+  width: 46px;
   min-width: 46px;
-  padding: 0 14px !important;
-  gap: 8px;
+  padding: 0 !important;
 }
 
 .ppt-anchor-copy--collapsed {
@@ -452,9 +451,10 @@
   color: var(--ppt-success) !important;
 }
 
-.ppt-anchor-copy-label {
-  font-size: 12px;
-  font-weight: 600;
+.ppt-anchor-copy .ppt-toolbar-header-button-icon {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.8;
 }
 
 .ppt-anchor-button-icon {
@@ -642,6 +642,11 @@
 
 .ppt-anchor-copy-badge {
   min-width: 22px;
+  position: absolute;
+  top: -8px;
+  right: -7px;
+  pointer-events: none;
+  line-height: 1;
 }
 
 .ppt-anchor-copy--collapsed .ppt-anchor-copy-badge {
