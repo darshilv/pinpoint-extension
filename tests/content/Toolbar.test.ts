@@ -17,6 +17,11 @@ const makeAnnotation = (overrides = {}) => ({
   ...overrides,
 });
 
+async function flushUi() {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 describe('Toolbar', () => {
   let toolbar;
 
@@ -145,7 +150,7 @@ describe('Toolbar', () => {
 
       await toolbar.addAnnotation(makeAnnotation({ feedback: 'Collapsed copy feedback' }));
       document.querySelector(`.${PPT_PREFIX}anchor-copy--collapsed`)?.click();
-      await Promise.resolve();
+      await flushUi();
 
       const collapsedCopy = document.querySelector(`.${PPT_PREFIX}anchor-copy--collapsed`);
       expect(collapsedCopy).not.toBeNull();
@@ -200,7 +205,7 @@ describe('Toolbar', () => {
       toolbar.setMode('active-review');
 
       document.querySelector(`.${PPT_PREFIX}copy-one`)?.click();
-      await Promise.resolve();
+      await flushUi();
 
       document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="history"]`)?.click();
       expect(writeMock).toHaveBeenCalledWith(expect.stringContaining('Single copy item'));
@@ -208,6 +213,69 @@ describe('Toolbar', () => {
       expect(document.querySelector(`.${PPT_PREFIX}section-subtitle`)?.textContent).toBe(
         '1 annotation'
       );
+    });
+
+    it('lets history items be copied again without changing their grouping', async () => {
+      const writeMock = vi.fn(async () => {});
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeMock },
+        configurable: true,
+      });
+      vi.spyOn(Date, 'now').mockReturnValue(3333);
+
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Reusable history item' }));
+      await toolbar.copyAll();
+      toolbar.setMode('active-review');
+      document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="history"]`)?.click();
+
+      document.querySelector(`.${PPT_PREFIX}copy-one`)?.click();
+      await flushUi();
+
+      expect(writeMock).toHaveBeenLastCalledWith(expect.stringContaining('Reusable history item'));
+      expect(document.querySelectorAll(`.${PPT_PREFIX}history-group`).length).toBe(1);
+      expect(document.querySelector(`.${PPT_PREFIX}section-subtitle`)?.textContent).toBe(
+        '1 annotation'
+      );
+      expect(document.querySelector(`.${PPT_PREFIX}copy-one`)?.textContent).toContain('Copied');
+      expect(document.querySelector(`.${PPT_PREFIX}copy-one`)?.className).toContain(
+        `${PPT_PREFIX}copy-one--success`
+      );
+    });
+
+    it('copies only the selected history group from the group-level copy button', async () => {
+      const writeMock = vi.fn(async () => {});
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeMock },
+        configurable: true,
+      });
+      await toolbar.addAnnotation(
+        makeAnnotation({
+          feedback: 'First group item',
+          status: 'resolved',
+          resolvedBy: 'copy',
+          copiedAt: 1000,
+        })
+      );
+      await toolbar.addAnnotation(
+        makeAnnotation({
+          feedback: 'Second group item',
+          status: 'resolved',
+          resolvedBy: 'copy',
+          copiedAt: 2000,
+        })
+      );
+      toolbar.setMode('active-review');
+      document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="history"]`)?.click();
+
+      const historyGroups = document.querySelectorAll(`.${PPT_PREFIX}history-group`);
+      historyGroups[1]
+        ?.querySelector(`.${PPT_PREFIX}history-copy`)
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await flushUi();
+
+      const lastCall = writeMock.mock.calls.at(-1)?.[0] ?? '';
+      expect(lastCall).toContain('First group item');
+      expect(lastCall).not.toContain('Second group item');
     });
 
     it('shows copied feedback state on the global copy button', async () => {
@@ -220,7 +288,7 @@ describe('Toolbar', () => {
       await toolbar.addAnnotation(makeAnnotation());
       toolbar.setMode('active-select');
       document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.click();
-      await Promise.resolve();
+      await flushUi();
 
       expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.className).toContain(
         `${PPT_PREFIX}anchor-copy--success`
@@ -237,7 +305,7 @@ describe('Toolbar', () => {
       await toolbar.addAnnotation(makeAnnotation({ feedback: 'Expanded success feedback' }));
       toolbar.setMode('active-select');
       document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.click();
-      await Promise.resolve();
+      await flushUi();
 
       const expandedCopy = document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`);
       expect(expandedCopy).not.toBeNull();
@@ -261,6 +329,17 @@ describe('Toolbar', () => {
       toolbar.setMode('active-review');
 
       expect(document.querySelector(`.${PPT_PREFIX}resolve-one`)).toBeNull();
+    });
+
+    it('does not show copied or page pills on history cards', async () => {
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'History card cleanup' }));
+      await toolbar.copyAll();
+      toolbar.setMode('active-review');
+      document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="history"]`)?.click();
+
+      const historyCard = document.querySelector(`.${PPT_PREFIX}annotation-item`);
+      expect(historyCard?.textContent).not.toContain('COPIED');
+      expect(historyCard?.textContent).not.toContain('PAGE');
     });
   });
 

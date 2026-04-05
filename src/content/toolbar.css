@@ -247,6 +247,18 @@
   margin-top: 2px;
 }
 
+.ppt-copy-one {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ppt-copy-one--success {
+  border-color: rgba(74, 222, 128, 0.26) !important;
+  background: rgba(74, 222, 128, 0.12) !important;
+  color: var(--ppt-success) !important;
+}
+
 .ppt-empty {
   display: flex;
   flex-direction: column;

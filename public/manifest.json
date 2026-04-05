@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Pinpoint",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Annotate UI elements and generate AI-ready prompts for coding agents",
   "permissions": ["storage", "activeTab", "scripting", "webNavigation"],
   "optional_host_permissions": ["https://*/*", "http://*/*"],

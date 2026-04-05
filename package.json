@@ -1,6 +1,6 @@
 {
   "name": "pinpoint-extension",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Annotate UI elements and generate AI-ready prompts",
   "type": "module",
   "scripts": {

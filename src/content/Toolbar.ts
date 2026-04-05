@@ -23,6 +23,8 @@ export class Toolbar {
   #onKeyDown: ((e: KeyboardEvent) => void) | null = null;
   #copyAllFeedback: 'idle' | 'copied' = 'idle';
   #copyAllFeedbackTimeout: number | null = null;
+  #copyOneFeedbackId: string | null = null;
+  #copyOneFeedbackTimeout: number | null = null;
 
   async mount() {
     this.#annotations = await getAnnotations(window.location.pathname);
@@ -43,6 +45,7 @@ export class Toolbar {
   unmount() {
     if (this.#onKeyDown) document.removeEventListener('keydown', this.#onKeyDown);
     if (this.#copyAllFeedbackTimeout !== null) window.clearTimeout(this.#copyAllFeedbackTimeout);
+    if (this.#copyOneFeedbackTimeout !== null) window.clearTimeout(this.#copyOneFeedbackTimeout);
     document.documentElement.removeAttribute('data-pinpoint-theme');
     this.#el?.remove();
     this.#el = null;
@@ -83,26 +86,24 @@ export class Toolbar {
     if (active.length === 0) return;
 
     const markdown = annotationsToMarkdown(active, window.location.href);
-    try {
-      await navigator.clipboard.writeText(markdown);
-      const copiedAt = Date.now();
-      this.#annotations = this.#annotations.map((annotation) =>
-        annotation.status === 'active'
-          ? {
-              ...annotation,
-              status: 'resolved',
-              resolvedBy: 'copy',
-              copiedAt,
-            }
-          : annotation
-      );
-      this.#setCopyAllFeedback('copied');
-      this.#emitAnnotationsChange();
-      this.#render();
-      await saveAnnotations(window.location.pathname, this.#annotations);
-    } catch {
-      console.log('[pinpoint] Clipboard unavailable:\n\n' + markdown);
-    }
+    const copied = await this.#writeClipboard(markdown);
+    if (!copied) return;
+
+    const copiedAt = Date.now();
+    this.#annotations = this.#annotations.map((annotation) =>
+      annotation.status === 'active'
+        ? {
+            ...annotation,
+            status: 'resolved',
+            resolvedBy: 'copy',
+            copiedAt,
+          }
+        : annotation
+    );
+    this.#setCopyAllFeedback('copied');
+    this.#emitAnnotationsChange();
+    this.#render();
+    await saveAnnotations(window.location.pathname, this.#annotations);
   }
 
   async copyOne(id: string): Promise<void> {
@@ -110,25 +111,37 @@ export class Toolbar {
     if (!annotation) return;
 
     const markdown = annotationToMarkdown(annotation);
-    try {
-      await navigator.clipboard.writeText(markdown);
-      const copiedAt = Date.now();
-      this.#annotations = this.#annotations.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: 'resolved',
-              resolvedBy: 'copy',
-              copiedAt,
-            }
-          : item
-      );
-      this.#emitAnnotationsChange();
-      this.#render();
-      await saveAnnotations(window.location.pathname, this.#annotations);
-    } catch {
-      console.log('[pinpoint] Clipboard unavailable:\n\n' + markdown);
+    const copied = await this.#writeClipboard(markdown);
+    if (!copied) return;
+
+    if (annotation.status === 'resolved') {
+      this.#setCopyOneFeedback(id);
+      return;
     }
+
+    const copiedAt = Date.now();
+    this.#annotations = this.#annotations.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            status: 'resolved',
+            resolvedBy: 'copy',
+            copiedAt,
+          }
+        : item
+    );
+    this.#setCopyOneFeedback(id);
+    this.#emitAnnotationsChange();
+    this.#render();
+    await saveAnnotations(window.location.pathname, this.#annotations);
+  }
+
+  async copyHistoryGroup(copiedAt: number): Promise<void> {
+    const group = this.#historyGroups().find((entry) => entry.copiedAt === copiedAt);
+    if (!group || group.annotations.length === 0) return;
+
+    const markdown = annotationsToMarkdown(group.annotations, window.location.href);
+    await this.#writeClipboard(markdown);
   }
 
   #activeAnnotations(): Annotation[] {
@@ -193,6 +206,21 @@ export class Toolbar {
     }
   }
 
+  #setCopyOneFeedback(id: string | null): void {
+    this.#copyOneFeedbackId = id;
+    if (this.#copyOneFeedbackTimeout !== null) {
+      window.clearTimeout(this.#copyOneFeedbackTimeout);
+      this.#copyOneFeedbackTimeout = null;
+    }
+    if (id) {
+      this.#copyOneFeedbackTimeout = window.setTimeout(() => {
+        this.#copyOneFeedbackId = null;
+        this.#render();
+      }, 1800);
+    }
+    this.#render();
+  }
+
   #toggleHelp(): void {
     this.#helpOpen = !this.#helpOpen;
     this.#render();
@@ -231,6 +259,16 @@ export class Toolbar {
       hour: 'numeric',
       minute: '2-digit',
     }).format(value);
+  }
+
+  async #writeClipboard(markdown: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(markdown);
+      return true;
+    } catch {
+      console.log('[pinpoint] Clipboard unavailable:\n\n' + markdown);
+      return false;
+    }
   }
 
   #render(): void {
@@ -302,8 +340,17 @@ export class Toolbar {
       `;
     const renderItems = (annotations: Annotation[]) =>
       annotations
-        .map(
-          (annotation) => `
+        .map((annotation) => {
+          const showCopyOneFeedback = this.#copyOneFeedbackId === annotation.id;
+          const copyOneIcon = showCopyOneFeedback
+            ? `
+          <svg class="${PPT_PREFIX}toolbar-header-button-icon" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M3.5 8.2 6.4 11l6.1-6.4" />
+          </svg>
+        `
+            : '';
+
+          return `
       <li class="${PPT_PREFIX}annotation-item" data-id="${annotation.id}">
         <div class="${PPT_PREFIX}item-meta">
           <span class="${PPT_PREFIX}item-element">${annotation.selector}</span>
@@ -313,13 +360,15 @@ export class Toolbar {
                 ? `<span class="${PPT_PREFIX}item-note-number">Note ${activeNumberById.get(annotation.id)}</span>`
                 : ''
             }
-            <span class="${PPT_PREFIX}item-badge ${annotation.status === 'resolved' ? `${PPT_PREFIX}item-badge--resolved` : ''}">
-              ${annotation.status === 'active' ? 'Open' : 'Copied'}
-            </span>
+            ${
+              annotation.status === 'active'
+                ? `<span class="${PPT_PREFIX}item-badge">Open</span>`
+                : ''
+            }
           </div>
         </div>
         ${
-          annotation.surface
+          annotation.surface && annotation.surface.kind !== 'page'
             ? `
           <div class="${PPT_PREFIX}item-surface-row">
             <span class="${PPT_PREFIX}item-surface ${annotation.surface.kind === 'dialog' ? `${PPT_PREFIX}item-surface--dialog` : ''}">${annotation.surface.label}</span>
@@ -333,12 +382,12 @@ export class Toolbar {
           ${
             annotation.status === 'active'
               ? `<button class="${PPT_PREFIX}copy-one" data-id="${annotation.id}">Copy</button>`
-              : ''
+              : `<button class="${PPT_PREFIX}copy-one ${showCopyOneFeedback ? `${PPT_PREFIX}copy-one--success` : ''}" data-id="${annotation.id}">${copyOneIcon}<span>${showCopyOneFeedback ? 'Copied' : 'Copy again'}</span></button>`
           }
         </div>
       </li>
     `
-        )
+        })
         .join('');
 
     this.#el.innerHTML = `
@@ -428,9 +477,9 @@ export class Toolbar {
               <p class="${PPT_PREFIX}toolbar-status">${active.length} active note${active.length === 1 ? '' : 's'}</p>
             </div>
             <div class="${PPT_PREFIX}toolbar-header-actions">
-              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}copy-all ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}toolbar-header-button--success` : ''}" title="${globalCopyTitle}" ${active.length === 0 ? 'disabled' : ''}>
+              <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}copy-all ${isCopySuccessVisible ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}" ${shouldDisableExpandedCopy ? 'disabled' : ''}>
                 ${globalCopyIcon}
-                <span>${this.#copyAllFeedback === 'copied' ? 'Copied' : 'Copy prompt'}</span>
+                ${hasActiveAnnotations ? `<span class="${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
               </button>
               <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}clear-active" ${active.length === 0 ? 'disabled' : ''}>Clear</button>
               <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}toolbar-minimize ${PPT_PREFIX}toolbar-header-button--icon" type="button" aria-label="Close review panel">×</button>
@@ -479,13 +528,16 @@ export class Toolbar {
                   : historyGroups
                       .map(
                         (group) => `
-              <li class="${PPT_PREFIX}section ${PPT_PREFIX}history-group">
+              <li class="${PPT_PREFIX}section ${PPT_PREFIX}history-group" data-copied-at="${group.copiedAt}">
                 <div class="${PPT_PREFIX}section-header">
                   <div class="${PPT_PREFIX}section-header-copy">
                     <span class="${PPT_PREFIX}section-title">${this.#formatHistoryTimestamp(group.copiedAt)}</span>
                     <span class="${PPT_PREFIX}section-subtitle">${group.annotations.length} annotation${group.annotations.length === 1 ? '' : 's'}</span>
                   </div>
-                  <span class="${PPT_PREFIX}section-count">${group.annotations.length}</span>
+                  <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}history-copy" type="button" aria-label="Copy this history group" title="Copy this history group">
+                    ${globalCopyIcon}
+                    <span class="${PPT_PREFIX}anchor-copy-badge">${group.annotations.length}</span>
+                  </button>
                 </div>
                 <ul class="${PPT_PREFIX}section-list">
                   ${renderItems(group.annotations)}
@@ -551,6 +603,11 @@ export class Toolbar {
     this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}copy-one`).forEach((button) => {
       button.addEventListener('click', (e) =>
         void this.copyOne((e.currentTarget as HTMLButtonElement).dataset.id!)
+      );
+    });
+    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}history-copy`).forEach((button) => {
+      button.addEventListener('click', () =>
+        void this.copyHistoryGroup(Number(button.closest(`.${PPT_PREFIX}history-group`)?.getAttribute('data-copied-at')))
       );
     });
   }
