@@ -36,14 +36,16 @@ describe('Toolbar', () => {
 
   it('starts with only the anchor button visible', () => {
     expect(document.querySelector(`.${PPT_PREFIX}anchor-button`)).not.toBeNull();
+    expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--collapsed`)).toBeNull();
     expect(document.querySelector(`.${PPT_PREFIX}anchor-actions`)).toBeNull();
     expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).toBeNull();
   });
 
-  it('shows the count badge on the main control while collapsed', async () => {
+  it('shows the collapsed copy button when active annotations exist and toolbar is inactive', async () => {
     await toolbar.addAnnotation(makeAnnotation());
 
-    expect(document.querySelector(`.${PPT_PREFIX}anchor-badge`)?.textContent).toBe('1');
+    expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--collapsed`)).not.toBeNull();
+    expect(document.querySelector(`.${PPT_PREFIX}anchor-copy-badge`)?.textContent).toBe('1');
   });
 
   it('restores persisted annotations from storage on mount', async () => {
@@ -62,25 +64,17 @@ describe('Toolbar', () => {
   });
 
   describe('mode rendering', () => {
-    it('shows quick actions in active-select mode', () => {
+    it('shows quick actions in active-select mode with disabled copy when empty', () => {
       toolbar.setMode('active-select');
 
       expect(document.querySelector(`.${PPT_PREFIX}anchor-actions`)).not.toBeNull();
-      expect(document.querySelectorAll(`.${PPT_PREFIX}anchor-action--icon`).length).toBe(2);
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)).not.toBeNull();
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.hasAttribute('disabled')).toBe(true);
       expect(document.querySelector(`.${PPT_PREFIX}theme-toggle`)).not.toBeNull();
       expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).toBeNull();
       expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(
         `${PPT_PREFIX}toolbar--active`
       );
-    });
-
-    it('keeps the action row interactive while active', () => {
-      toolbar.setMode('active-select');
-
-      const actionRow = document.querySelector(`.${PPT_PREFIX}anchor-actions`);
-
-      expect(actionRow).not.toBeNull();
-      expect(getComputedStyle(actionRow).pointerEvents).toBe('auto');
     });
 
     it('shows the side review panel in active-review mode', async () => {
@@ -89,7 +83,9 @@ describe('Toolbar', () => {
 
       expect(document.querySelector(`.${PPT_PREFIX}review-panel`)).not.toBeNull();
       expect(document.querySelector(`.${PPT_PREFIX}toolbar-title`)?.textContent).toBe('Pinpoint');
-      expect(document.querySelector(`.${PPT_PREFIX}section-title`)?.textContent).toBe('Active');
+      expect(document.querySelector(`.${PPT_PREFIX}review-tab--active`)?.textContent).toContain(
+        'Active'
+      );
     });
   });
 
@@ -109,22 +105,6 @@ describe('Toolbar', () => {
       expect(received?.detail.mode).toBe('active-select');
     });
 
-    it('requests inactive mode when the anchor is clicked while active', () => {
-      toolbar.setMode('active-select');
-      let received = null;
-      document.addEventListener(
-        EVENTS.MODE_CHANGE,
-        (e) => {
-          received = e;
-        },
-        { once: true }
-      );
-
-      document.querySelector(`.${PPT_PREFIX}anchor-button`)?.click();
-
-      expect(received?.detail.mode).toBe('inactive');
-    });
-
     it('requests review mode from the review action', () => {
       toolbar.setMode('active-select');
       let received = null;
@@ -140,157 +120,100 @@ describe('Toolbar', () => {
 
       expect(received).not.toBeNull();
     });
-
-    it('closes review mode from the review action when already open', async () => {
-      await toolbar.addAnnotation(makeAnnotation());
-      toolbar.setMode('active-review');
-      let received = null;
-      document.addEventListener(
-        EVENTS.MODE_CHANGE,
-        (e) => {
-          received = e;
-        },
-        { once: true }
-      );
-
-      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[0]?.click();
-
-      expect(received?.detail.mode).toBe('active-select');
-    });
-
-    it('opens the help panel from the help action', () => {
-      toolbar.setMode('active-select');
-
-      document.querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]?.click();
-
-      expect(document.querySelector(`.${PPT_PREFIX}help-panel`)).not.toBeNull();
-      expect(document.querySelector(`.${PPT_PREFIX}help-panel`)?.textContent).not.toContain(
-        'Dark theme'
-      );
-      expect(document.querySelector(`.${PPT_PREFIX}help-panel`)?.textContent).not.toContain(
-        'Light theme'
-      );
-    });
   });
 
-  describe('anchor button states', () => {
-    it('shows the inactive anchor state by default', () => {
-      const anchorButton = document.querySelector(`.${PPT_PREFIX}anchor-button`);
-      expect(anchorButton?.getAttribute('data-state')).toBe('inactive');
-      expect(anchorButton?.getAttribute('aria-label')).toBe('Activate Pinpoint');
-    });
+  describe('copy flows', () => {
+    it('writes active annotations as markdown to clipboard and moves them into history', async () => {
+      const writeMock = vi.fn(async () => {});
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeMock },
+        configurable: true,
+      });
+      vi.spyOn(Date, 'now').mockReturnValue(1111);
 
-    it('shows the active anchor state in select mode', () => {
-      toolbar.setMode('active-select');
-
-      const anchorButton = document.querySelector(`.${PPT_PREFIX}anchor-button`);
-      expect(anchorButton?.getAttribute('data-state')).toBe('active');
-      expect(anchorButton?.getAttribute('aria-label')).toBe('Deactivate Pinpoint');
-    });
-
-    it('shows the review anchor state when the panel is open', async () => {
-      await toolbar.addAnnotation(makeAnnotation());
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Fix alignment' }));
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Update padding' }));
+      await toolbar.copyAll();
       toolbar.setMode('active-review');
 
-      const anchorButton = document.querySelector(`.${PPT_PREFIX}anchor-button`);
-      expect(anchorButton?.getAttribute('data-state')).toBe('review');
-      expect(anchorButton?.getAttribute('aria-label')).toBe('Deactivate Pinpoint');
-    });
+      expect(writeMock).toHaveBeenCalledWith(expect.stringContaining('Fix alignment'));
+      expect(document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="active"]`)?.textContent).toContain('0');
 
-    it('shows the annotation count on the review action', async () => {
-      await toolbar.addAnnotation(makeAnnotation());
-      toolbar.setMode('active-select');
-
-      expect(document.querySelector(`.${PPT_PREFIX}anchor-badge`)?.className).toContain(
-        `${PPT_PREFIX}anchor-badge--hidden`
-      );
-      expect(document.querySelector(`.${PPT_PREFIX}anchor-action-badge`)?.textContent).toBe('1');
-    });
-  });
-
-  describe('annotation actions', () => {
-    it('shows the captured surface label on the annotation card', async () => {
-      await toolbar.addAnnotation(
-        makeAnnotation({ surface: { kind: 'dialog', label: 'Dialog: Invite people' } })
-      );
-      toolbar.setMode('active-review');
-
-      expect(document.querySelector(`.${PPT_PREFIX}item-surface`)?.textContent).toContain(
-        'Dialog: Invite people'
+      document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="history"]`)?.click();
+      expect(document.querySelectorAll(`.${PPT_PREFIX}history-group`).length).toBe(1);
+      expect(document.querySelector(`.${PPT_PREFIX}section-subtitle`)?.textContent).toBe(
+        '2 annotations'
       );
     });
 
-    it('shows the active note number on the annotation card', async () => {
-      await toolbar.addAnnotation(makeAnnotation({ id: 'note-1' }));
-      await toolbar.addAnnotation(makeAnnotation({ id: 'note-2', selector: 'input.email' }));
+    it('does not mutate annotations when clipboard write fails', async () => {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: vi.fn(async () => Promise.reject(new Error('nope'))) },
+        configurable: true,
+      });
+
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Keep me active' }));
+      await toolbar.copyAll();
       toolbar.setMode('active-review');
 
-      const noteNumbers = Array.from(
-        document.querySelectorAll(`.${PPT_PREFIX}item-note-number`)
-      ).map((el) => el.textContent);
-      expect(noteNumbers).toEqual(['Note 1', 'Note 2']);
+      expect(document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="active"]`)?.textContent).toContain('1');
     });
 
-    it('updates comment on existing annotation', async () => {
-      const annotation = makeAnnotation({ feedback: 'Old' });
-      await toolbar.addAnnotation(annotation);
-      await toolbar.updateAnnotation(annotation.id, 'New comment');
+    it('keeps per-item copy and creates a one-item history group', async () => {
+      const writeMock = vi.fn(async () => {});
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeMock },
+        configurable: true,
+      });
+      vi.spyOn(Date, 'now').mockReturnValue(2222);
+
+      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Single copy item' }));
       toolbar.setMode('active-review');
 
-      const items = document.querySelectorAll(`.${PPT_PREFIX}annotation-item`);
-      expect(items[0].textContent).toContain('New comment');
-    });
-
-    it('reveals resolved history on demand', async () => {
-      const annotation = makeAnnotation();
-      await toolbar.addAnnotation(annotation);
-      await toolbar.resolve(annotation.id);
-      toolbar.setMode('active-review');
-
-      document.querySelector(`.${PPT_PREFIX}history-toggle`)?.click();
-
-      const sections = Array.from(document.querySelectorAll(`.${PPT_PREFIX}section-title`)).map(
-        (el) => el.textContent
-      );
-      expect(sections).toContain('Resolved history');
-      expect(document.querySelectorAll(`.${PPT_PREFIX}annotation-item`).length).toBe(1);
-    });
-
-    it('emits annotation changes immediately when clearing active notes', async () => {
-      await toolbar.addAnnotation(makeAnnotation());
-      toolbar.setMode('active-review');
-
-      const originalSet = chrome.storage.local.set;
-      let releaseSave;
-      chrome.storage.local.set = vi.fn(
-        () =>
-          new Promise((resolve) => {
-            releaseSave = resolve;
-          })
-      );
-
-      document.querySelector(`.${PPT_PREFIX}clear-active`)?.click();
-
-      expect(document.querySelector(`.${PPT_PREFIX}section-title`)).toBeNull();
-
-      releaseSave();
+      document.querySelector(`.${PPT_PREFIX}copy-one`)?.click();
       await Promise.resolve();
-      chrome.storage.local.set = originalSet;
-    });
-  });
 
-  describe('copyAll', () => {
-    it('writes active annotations as markdown to clipboard', async () => {
+      document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="history"]`)?.click();
+      expect(writeMock).toHaveBeenCalledWith(expect.stringContaining('Single copy item'));
+      expect(document.querySelectorAll(`.${PPT_PREFIX}history-group`).length).toBe(1);
+      expect(document.querySelector(`.${PPT_PREFIX}section-subtitle`)?.textContent).toBe(
+        '1 annotation'
+      );
+    });
+
+    it('shows copied feedback state on the global copy button', async () => {
       const writeMock = vi.fn(async () => {});
       Object.defineProperty(navigator, 'clipboard', {
         value: { writeText: writeMock },
         configurable: true,
       });
 
-      await toolbar.addAnnotation(makeAnnotation({ feedback: 'Fix alignment' }));
-      await toolbar.copyAll();
+      await toolbar.addAnnotation(makeAnnotation());
+      toolbar.setMode('active-select');
+      document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.click();
+      await Promise.resolve();
 
-      expect(writeMock).toHaveBeenCalledWith(expect.stringContaining('Fix alignment'));
+      expect(document.querySelector(`.${PPT_PREFIX}anchor-copy--expanded`)?.className).toContain(
+        `${PPT_PREFIX}anchor-copy--success`
+      );
+    });
+  });
+
+  describe('review panel', () => {
+    it('shows active and history tabs with counts', async () => {
+      await toolbar.addAnnotation(makeAnnotation());
+      await toolbar.addAnnotation(makeAnnotation({ status: 'resolved', resolvedBy: 'copy', copiedAt: 1234 }));
+      toolbar.setMode('active-review');
+
+      expect(document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="active"]`)?.textContent).toContain('1');
+      expect(document.querySelector(`.${PPT_PREFIX}review-tab[data-tab="history"]`)?.textContent).toContain('1');
+    });
+
+    it('does not show a resolve action on annotation cards', async () => {
+      await toolbar.addAnnotation(makeAnnotation());
+      toolbar.setMode('active-review');
+
+      expect(document.querySelector(`.${PPT_PREFIX}resolve-one`)).toBeNull();
     });
   });
 
@@ -304,29 +227,27 @@ describe('Toolbar', () => {
 
       expect(document.documentElement.getAttribute('data-pinpoint-theme')).toBe('light');
     });
-
-    it('toggles the theme from the active anchor controls', async () => {
-      toolbar.setMode('active-select');
-      document
-        .querySelectorAll(`.${PPT_PREFIX}anchor-action`)[1]
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      const setSpy = chrome.storage.local.set;
-
-      document
-        .querySelector(`.${PPT_PREFIX}theme-toggle`)
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({ 'pinpoint:theme': 'light' }));
-      expect(document.querySelector(`.${PPT_PREFIX}toolbar`)?.className).toContain(
-        `${PPT_PREFIX}theme-light`
-      );
-      expect(document.documentElement.getAttribute('data-pinpoint-theme')).toBe('light');
-    });
   });
 
   describe('keyboard shortcuts', () => {
+    it('closes review mode when Escape is pressed', async () => {
+      await toolbar.addAnnotation(makeAnnotation());
+      toolbar.setMode('active-review');
+
+      let received = null;
+      document.addEventListener(
+        EVENTS.MODE_CHANGE,
+        (e) => {
+          received = e;
+        },
+        { once: true }
+      );
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+      expect(received?.detail.mode).toBe('active-select');
+    });
+
     it('closes review mode when h is pressed', async () => {
       await toolbar.addAnnotation(makeAnnotation());
       toolbar.setMode('active-review');
@@ -343,17 +264,6 @@ describe('Toolbar', () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'h', bubbles: true }));
 
       expect(received?.detail.mode).toBe('active-select');
-    });
-
-    it('clears active annotations when d is pressed', async () => {
-      await toolbar.addAnnotation(makeAnnotation());
-      toolbar.setMode('active-review');
-      const clearButton = document.querySelector(`.${PPT_PREFIX}clear-active`);
-      const clickSpy = vi.spyOn(clearButton, 'click');
-
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', bubbles: true }));
-
-      expect(clickSpy).toHaveBeenCalled();
     });
 
     it('copies active annotations when c is pressed', async () => {

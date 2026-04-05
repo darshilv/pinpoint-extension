@@ -33,9 +33,9 @@ const popupMock = {
   hide: vi.fn(),
 };
 
-vi.mock('../../src/content/Overlay', () => ({ Overlay: vi.fn(() => overlayMock) }));
-vi.mock('../../src/content/Toolbar', () => ({ Toolbar: vi.fn(() => toolbarMock) }));
-vi.mock('../../src/content/Popup', () => ({ Popup: vi.fn(() => popupMock) }));
+vi.mock('../../src/content/Overlay', () => ({ Overlay: class MockOverlay { constructor() { return overlayMock; } } }));
+vi.mock('../../src/content/Toolbar', () => ({ Toolbar: class MockToolbar { constructor() { return toolbarMock; } } }));
+vi.mock('../../src/content/Popup', () => ({ Popup: class MockPopup { constructor() { return popupMock; } } }));
 vi.mock('../../src/content/content.css', () => ({}));
 
 import { EVENTS } from '../../src/constants';

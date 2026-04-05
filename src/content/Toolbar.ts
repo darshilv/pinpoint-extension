@@ -1,20 +1,25 @@
 import type { Annotation, PinpointMode } from '../types';
-import { annotationsToMarkdown, annotationToMarkdown } from '../utils/markdown';
+import { annotationToMarkdown, annotationsToMarkdown } from '../utils/markdown';
 import { getAnnotations, saveAnnotations } from '../utils/storage';
 import { EVENTS, PPT_PREFIX } from './constants';
 
 type ToolbarTheme = 'light' | 'dark';
+type ReviewTab = 'active' | 'history';
+
+interface HistoryGroup {
+  copiedAt: number;
+  annotations: Annotation[];
+}
 
 const THEME_STORAGE_KEY = 'pinpoint:theme';
 
 export class Toolbar {
   #el: HTMLDivElement | null = null;
   #annotations: Annotation[] = [];
-  #showResolvedHistory = false;
-  #lastResolvedId: string | null = null;
   #helpOpen = false;
   #theme: ToolbarTheme = 'dark';
   #mode: PinpointMode = 'inactive';
+  #tab: ReviewTab = 'active';
   #onKeyDown: ((e: KeyboardEvent) => void) | null = null;
   #copyAllFeedback: 'idle' | 'copied' = 'idle';
   #copyAllFeedbackTimeout: number | null = null;
@@ -46,8 +51,8 @@ export class Toolbar {
   setMode(mode: PinpointMode): void {
     this.#mode = mode;
     if (mode !== 'active-review') {
-      this.#showResolvedHistory = false;
       this.#helpOpen = false;
+      this.#tab = 'active';
     }
     this.#render();
   }
@@ -58,7 +63,7 @@ export class Toolbar {
 
   async addAnnotation(annotation: Annotation): Promise<void> {
     this.#annotations = [...this.#annotations, annotation];
-    this.#showResolvedHistory = false;
+    this.#tab = 'active';
     this.#emitAnnotationsChange();
     this.#render();
     await saveAnnotations(window.location.pathname, this.#annotations);
@@ -73,36 +78,56 @@ export class Toolbar {
     await saveAnnotations(window.location.pathname, this.#annotations);
   }
 
-  async resolve(id: string): Promise<void> {
-    this.#annotations = this.#annotations.map((a) =>
-      a.id === id ? { ...a, status: 'resolved' } : a
-    );
-    this.#lastResolvedId = id;
-    this.#showResolvedHistory = false;
-    this.#emitAnnotationsChange();
-    this.#render();
-    await saveAnnotations(window.location.pathname, this.#annotations);
-  }
-
   async copyAll(): Promise<void> {
-    const active = this.#annotations.filter((a) => a.status === 'active');
-    const md = annotationsToMarkdown(active, window.location.href);
+    const active = this.#activeAnnotations();
+    if (active.length === 0) return;
+
+    const markdown = annotationsToMarkdown(active, window.location.href);
     try {
-      await navigator.clipboard.writeText(md);
+      await navigator.clipboard.writeText(markdown);
+      const copiedAt = Date.now();
+      this.#annotations = this.#annotations.map((annotation) =>
+        annotation.status === 'active'
+          ? {
+              ...annotation,
+              status: 'resolved',
+              resolvedBy: 'copy',
+              copiedAt,
+            }
+          : annotation
+      );
       this.#setCopyAllFeedback('copied');
+      this.#emitAnnotationsChange();
+      this.#render();
+      await saveAnnotations(window.location.pathname, this.#annotations);
     } catch {
-      console.log('[pinpoint] Clipboard unavailable:\n\n' + md);
+      console.log('[pinpoint] Clipboard unavailable:\n\n' + markdown);
     }
   }
 
   async copyOne(id: string): Promise<void> {
     const annotation = this.#annotations.find((a) => a.id === id);
     if (!annotation) return;
-    const md = annotationToMarkdown(annotation);
+
+    const markdown = annotationToMarkdown(annotation);
     try {
-      await navigator.clipboard.writeText(md);
+      await navigator.clipboard.writeText(markdown);
+      const copiedAt = Date.now();
+      this.#annotations = this.#annotations.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: 'resolved',
+              resolvedBy: 'copy',
+              copiedAt,
+            }
+          : item
+      );
+      this.#emitAnnotationsChange();
+      this.#render();
+      await saveAnnotations(window.location.pathname, this.#annotations);
     } catch {
-      console.log('[pinpoint] Clipboard unavailable:\n\n' + md);
+      console.log('[pinpoint] Clipboard unavailable:\n\n' + markdown);
     }
   }
 
@@ -110,8 +135,25 @@ export class Toolbar {
     return this.#annotations.filter((a) => a.status === 'active');
   }
 
-  #resolvedAnnotations(): Annotation[] {
-    return this.#annotations.filter((a) => a.status === 'resolved');
+  #historyGroups(): HistoryGroup[] {
+    const copied = this.#annotations.filter(
+      (a) => a.status === 'resolved' && a.resolvedBy === 'copy' && typeof a.copiedAt === 'number'
+    );
+    const groups = new Map<number, Annotation[]>();
+
+    copied.forEach((annotation) => {
+      const copiedAt = annotation.copiedAt!;
+      const current = groups.get(copiedAt) ?? [];
+      current.push(annotation);
+      groups.set(copiedAt, current);
+    });
+
+    return Array.from(groups.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([copiedAt, annotations]) => ({
+        copiedAt,
+        annotations,
+      }));
   }
 
   getActiveAnnotations(): Annotation[] {
@@ -149,7 +191,6 @@ export class Toolbar {
         this.#render();
       }, 1800);
     }
-    this.#render();
   }
 
   #toggleHelp(): void {
@@ -172,17 +213,39 @@ export class Toolbar {
     return 'active';
   }
 
+  #formatHistoryTimestamp(timestamp: number): string {
+    const value = new Date(timestamp);
+    const now = new Date();
+    const isToday = value.toDateString() === now.toDateString();
+
+    if (isToday) {
+      return `Today at ${new Intl.DateTimeFormat(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(value)}`;
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(value);
+  }
+
   #render(): void {
     if (!this.#el) return;
+
     const active = this.#activeAnnotations();
-    const resolved = this.#resolvedAnnotations();
-    const hasAttention = active.length > 0 || resolved.length > 0;
-    const showResolvedToast =
-      !this.#showResolvedHistory && resolved.length > 0 && this.#lastResolvedId !== null;
+    const historyGroups = this.#historyGroups();
+    const historyCount = historyGroups.reduce((total, group) => total + group.annotations.length, 0);
+    const hasAttention = active.length > 0 || historyCount > 0;
     const reviewOpen = this.#mode === 'active-review';
     const selecting = this.#mode === 'active-select';
     const anchorActive = this.#mode !== 'inactive';
     const helpOpen = anchorActive && this.#helpOpen;
+    const showCollapsedCopy = !anchorActive && active.length > 0;
+    const showExpandedCopy = anchorActive;
 
     this.#el.className = [
       `${PPT_PREFIX}toolbar`,
@@ -196,7 +259,7 @@ export class Toolbar {
       .join(' ');
 
     const activeNumberById = new Map(active.map((annotation, index) => [annotation.id, index + 1]));
-    const copyAllIcon =
+    const globalCopyIcon =
       this.#copyAllFeedback === 'copied'
         ? `
       <svg class="${PPT_PREFIX}toolbar-header-button-icon" viewBox="0 0 16 16" aria-hidden="true">
@@ -209,39 +272,8 @@ export class Toolbar {
         <path d="M9.8 3.2V2.5a1 1 0 0 0-1-1H3.5a1 1 0 0 0-1 1v7.3a1 1 0 0 0 1 1h.7" />
       </svg>
     `;
-    const copyAllLabel = this.#copyAllFeedback === 'copied' ? 'Copied' : 'Copy prompt';
-    const renderItems = (annotations: Annotation[]) =>
-      annotations
-        .map(
-          (a) => `
-      <li class="${PPT_PREFIX}annotation-item" data-id="${a.id}">
-        <div class="${PPT_PREFIX}item-meta">
-          <span class="${PPT_PREFIX}item-element">${a.selector}</span>
-          <div class="${PPT_PREFIX}item-meta-badges">
-            ${a.status === 'active' ? `<span class="${PPT_PREFIX}item-note-number">Note ${activeNumberById.get(a.id)}</span>` : ''}
-            <span class="${PPT_PREFIX}item-badge ${a.status === 'resolved' ? `${PPT_PREFIX}item-badge--resolved` : ''}">${a.status === 'active' ? 'Open' : 'Done'}</span>
-          </div>
-        </div>
-        ${
-          a.surface
-            ? `
-          <div class="${PPT_PREFIX}item-surface-row">
-            <span class="${PPT_PREFIX}item-surface ${a.surface.kind === 'dialog' ? `${PPT_PREFIX}item-surface--dialog` : ''}">${a.surface.label}</span>
-          </div>
-        `
-            : ''
-        }
-        <span class="${PPT_PREFIX}item-comment">${a.feedback}</span>
-        <span class="${PPT_PREFIX}item-context">${a.context || a.path}</span>
-        <div class="${PPT_PREFIX}item-actions">
-          <button class="${PPT_PREFIX}copy-one" data-id="${a.id}">Copy</button>
-          ${a.status === 'active' ? `<button class="${PPT_PREFIX}resolve-one" data-id="${a.id}">Resolve</button>` : ''}
-        </div>
-      </li>
-    `
-        )
-        .join('');
-
+    const globalCopyLabel = this.#copyAllFeedback === 'copied' ? 'Copied' : 'Copy';
+    const globalCopyTitle = active.length > 0 ? 'Copy active annotations' : 'Nothing to copy';
     const reviewIcon = `
       <svg class="${PPT_PREFIX}anchor-icon" viewBox="0 0 20 20" aria-hidden="true">
         <path d="M5 5.5h10M5 10h10M5 14.5h6" />
@@ -266,23 +298,74 @@ export class Toolbar {
           <path class="${PPT_PREFIX}theme-toggle-sun-rays" d="M12 3.25v2.1M12 18.65v2.1M3.25 12h2.1M18.65 12h2.1M5.82 5.82l1.49 1.49M16.69 16.69l1.49 1.49M5.82 18.18l1.49-1.49M16.69 7.31l1.49-1.49" />
         </svg>
       `;
-
-    const anchorButtonState = this.#anchorButtonState();
+    const renderItems = (annotations: Annotation[]) =>
+      annotations
+        .map(
+          (annotation) => `
+      <li class="${PPT_PREFIX}annotation-item" data-id="${annotation.id}">
+        <div class="${PPT_PREFIX}item-meta">
+          <span class="${PPT_PREFIX}item-element">${annotation.selector}</span>
+          <div class="${PPT_PREFIX}item-meta-badges">
+            ${
+              annotation.status === 'active'
+                ? `<span class="${PPT_PREFIX}item-note-number">Note ${activeNumberById.get(annotation.id)}</span>`
+                : ''
+            }
+            <span class="${PPT_PREFIX}item-badge ${annotation.status === 'resolved' ? `${PPT_PREFIX}item-badge--resolved` : ''}">
+              ${annotation.status === 'active' ? 'Open' : 'Copied'}
+            </span>
+          </div>
+        </div>
+        ${
+          annotation.surface
+            ? `
+          <div class="${PPT_PREFIX}item-surface-row">
+            <span class="${PPT_PREFIX}item-surface ${annotation.surface.kind === 'dialog' ? `${PPT_PREFIX}item-surface--dialog` : ''}">${annotation.surface.label}</span>
+          </div>
+        `
+            : ''
+        }
+        <span class="${PPT_PREFIX}item-comment">${annotation.feedback}</span>
+        <span class="${PPT_PREFIX}item-context">${annotation.context || annotation.path}</span>
+        <div class="${PPT_PREFIX}item-actions">
+          ${
+            annotation.status === 'active'
+              ? `<button class="${PPT_PREFIX}copy-one" data-id="${annotation.id}">Copy</button>`
+              : ''
+          }
+        </div>
+      </li>
+    `
+        )
+        .join('');
 
     this.#el.innerHTML = `
       <div class="${PPT_PREFIX}anchor-shell ${anchorActive || hasAttention ? `${PPT_PREFIX}anchor-shell--active` : ''}">
-        <button class="${PPT_PREFIX}anchor-button" type="button" data-state="${anchorButtonState}" aria-label="${this.#anchorButtonLabel()}">
-          <svg class="${PPT_PREFIX}anchor-button-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--top" d="M7 9h10" />
-            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--bottom" d="M7 15h10" />
-            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--vertical" d="M12 7v10" />
-          </svg>
-          ${hasAttention ? `<span class="${PPT_PREFIX}anchor-badge ${anchorActive ? `${PPT_PREFIX}anchor-badge--hidden` : ''}">${active.length}</span>` : ''}
-        </button>
+        ${
+          showCollapsedCopy
+            ? `
+          <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--collapsed ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}">
+            ${globalCopyIcon}
+            <span class="${PPT_PREFIX}anchor-copy-badge">${active.length}</span>
+          </button>
+        `
+            : ''
+        }
         ${
           anchorActive
             ? `
           <div class="${PPT_PREFIX}anchor-actions" aria-label="Pinpoint actions">
+            ${
+              showExpandedCopy
+                ? `
+              <button class="${PPT_PREFIX}anchor-copy ${PPT_PREFIX}anchor-copy--expanded ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}anchor-copy--success` : ''}" type="button" aria-label="${globalCopyTitle}" title="${globalCopyTitle}" ${active.length === 0 ? 'disabled' : ''}>
+                ${globalCopyIcon}
+                <span class="${PPT_PREFIX}anchor-copy-label">${globalCopyLabel}</span>
+                ${active.length > 0 ? `<span class="${PPT_PREFIX}anchor-action-badge ${PPT_PREFIX}anchor-copy-badge">${active.length}</span>` : ''}
+              </button>
+            `
+                : ''
+            }
             <button class="${PPT_PREFIX}anchor-action ${PPT_PREFIX}anchor-action--icon ${reviewOpen ? `${PPT_PREFIX}anchor-action--selected` : ''}" type="button" aria-label="${reviewOpen ? 'Close review panel' : 'Open review panel'}" title="Review">
               ${reviewIcon}
               ${hasAttention ? `<span class="${PPT_PREFIX}anchor-action-badge">${active.length}</span>` : ''}
@@ -297,6 +380,14 @@ export class Toolbar {
         `
             : ''
         }
+        <button class="${PPT_PREFIX}anchor-button" type="button" data-state="${this.#anchorButtonState()}" aria-label="${this.#anchorButtonLabel()}">
+          <svg class="${PPT_PREFIX}anchor-button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--top" d="M7 9h10" />
+            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--bottom" d="M7 15h10" />
+            <path class="${PPT_PREFIX}anchor-button-line ${PPT_PREFIX}anchor-button-line--vertical" d="M12 7v10" />
+          </svg>
+          ${hasAttention ? `<span class="${PPT_PREFIX}anchor-badge ${anchorActive ? `${PPT_PREFIX}anchor-badge--hidden` : ''}">${active.length}</span>` : ''}
+        </button>
         ${
           helpOpen
             ? `
@@ -338,42 +429,36 @@ export class Toolbar {
               <p class="${PPT_PREFIX}toolbar-status">${active.length} active note${active.length === 1 ? '' : 's'}</p>
             </div>
             <div class="${PPT_PREFIX}toolbar-header-actions">
-              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}copy-all ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}toolbar-header-button--success` : ''}" ${active.length === 0 ? 'disabled' : ''}>
-                ${copyAllIcon}
-                <span>${copyAllLabel}</span>
+              <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}copy-all ${this.#copyAllFeedback === 'copied' ? `${PPT_PREFIX}toolbar-header-button--success` : ''}" title="${globalCopyTitle}" ${active.length === 0 ? 'disabled' : ''}>
+                ${globalCopyIcon}
+                <span>${this.#copyAllFeedback === 'copied' ? 'Copied' : 'Copy prompt'}</span>
               </button>
               <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}clear-active" ${active.length === 0 ? 'disabled' : ''}>Clear</button>
               <button class="${PPT_PREFIX}toolbar-header-button ${PPT_PREFIX}toolbar-minimize ${PPT_PREFIX}toolbar-header-button--icon" type="button" aria-label="Close review panel">×</button>
             </div>
           </div>
+          <div class="${PPT_PREFIX}review-tabs" role="tablist" aria-label="Review sections">
+            <button class="${PPT_PREFIX}review-tab ${this.#tab === 'active' ? `${PPT_PREFIX}review-tab--active` : ''}" type="button" role="tab" aria-selected="${this.#tab === 'active'}" data-tab="active">
+              <span>Active</span>
+              <span class="${PPT_PREFIX}section-count">${active.length}</span>
+            </button>
+            <button class="${PPT_PREFIX}review-tab ${this.#tab === 'history' ? `${PPT_PREFIX}review-tab--active` : ''}" type="button" role="tab" aria-selected="${this.#tab === 'history'}" data-tab="history">
+              <span>History</span>
+              <span class="${PPT_PREFIX}section-count">${historyCount}</span>
+            </button>
+          </div>
           <ul class="${PPT_PREFIX}list">
             ${
-              showResolvedToast
-                ? `
-              <li class="${PPT_PREFIX}history-toast">
-                <div class="${PPT_PREFIX}history-toast-copy">
-                  <span class="${PPT_PREFIX}history-toast-title">Marked resolved</span>
-                  <span class="${PPT_PREFIX}history-toast-body">Completed notes are hidden to keep the workspace focused.</span>
-                </div>
-                <button class="${PPT_PREFIX}history-toggle" type="button">View history</button>
-              </li>
-            `
-                : ''
-            }
-            ${
-              active.length === 0 && resolved.length === 0
-                ? `
+              this.#tab === 'active'
+                ? active.length === 0
+                  ? `
               <li class="${PPT_PREFIX}empty">
                 <div class="${PPT_PREFIX}empty-illustration"></div>
                 <h3 class="${PPT_PREFIX}empty-title">Start collecting feedback</h3>
                 <p class="${PPT_PREFIX}empty-body">Activate Pinpoint and click any element to add a note.</p>
               </li>
             `
-                : ''
-            }
-            ${
-              active.length > 0
-                ? `
+                  : `
               <li class="${PPT_PREFIX}section">
                 <div class="${PPT_PREFIX}section-header">
                   <span class="${PPT_PREFIX}section-title">Active</span>
@@ -384,28 +469,32 @@ export class Toolbar {
                 </ul>
               </li>
             `
-                : ''
-            }
-            ${
-              this.#showResolvedHistory && resolved.length > 0
-                ? `
-              <li class="${PPT_PREFIX}section">
+                : historyCount === 0
+                  ? `
+              <li class="${PPT_PREFIX}empty">
+                <div class="${PPT_PREFIX}empty-illustration"></div>
+                <h3 class="${PPT_PREFIX}empty-title">No copied history yet</h3>
+                <p class="${PPT_PREFIX}empty-body">Copied notes will appear here in timestamped groups.</p>
+              </li>
+            `
+                  : historyGroups
+                      .map(
+                        (group) => `
+              <li class="${PPT_PREFIX}section ${PPT_PREFIX}history-group">
                 <div class="${PPT_PREFIX}section-header">
                   <div class="${PPT_PREFIX}section-header-copy">
-                    <span class="${PPT_PREFIX}section-title">Resolved history</span>
-                    <span class="${PPT_PREFIX}section-subtitle">A lightweight record of notes you already completed.</span>
+                    <span class="${PPT_PREFIX}section-title">${this.#formatHistoryTimestamp(group.copiedAt)}</span>
+                    <span class="${PPT_PREFIX}section-subtitle">${group.annotations.length} annotation${group.annotations.length === 1 ? '' : 's'}</span>
                   </div>
-                  <div class="${PPT_PREFIX}section-header-actions">
-                    <span class="${PPT_PREFIX}section-count">${resolved.length}</span>
-                    <button class="${PPT_PREFIX}history-hide" type="button">Hide</button>
-                  </div>
+                  <span class="${PPT_PREFIX}section-count">${group.annotations.length}</span>
                 </div>
                 <ul class="${PPT_PREFIX}section-list">
-                  ${renderItems(resolved)}
+                  ${renderItems(group.annotations)}
                 </ul>
               </li>
             `
-                : ''
+                      )
+                      .join('')
             }
           </ul>
         </aside>
@@ -419,6 +508,9 @@ export class Toolbar {
       ?.addEventListener('click', () => {
         this.#toggleAnchorMode();
       });
+    this.#el
+      .querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-copy`)
+      .forEach((button) => button.addEventListener('click', () => void this.copyAll()));
     this.#el
       .querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}anchor-action`)[0]
       ?.addEventListener('click', () => {
@@ -447,37 +539,25 @@ export class Toolbar {
       });
     this.#el
       .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}copy-all`)
-      ?.addEventListener('click', () => this.copyAll());
+      ?.addEventListener('click', () => void this.copyAll());
     this.#el
       .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}clear-active`)
-      ?.addEventListener('click', () => this.#clearActive());
-    this.#el
-      .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}history-toggle`)
-      ?.addEventListener('click', () => {
-        this.#showResolvedHistory = true;
+      ?.addEventListener('click', () => void this.#clearActive());
+    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}review-tab`).forEach((button) => {
+      button.addEventListener('click', () => {
+        this.#tab = button.dataset.tab as ReviewTab;
         this.#render();
       });
-    this.#el
-      .querySelector<HTMLButtonElement>(`.${PPT_PREFIX}history-hide`)
-      ?.addEventListener('click', () => {
-        this.#showResolvedHistory = false;
-        this.#render();
-      });
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}copy-one`).forEach((btn) => {
-      btn.addEventListener('click', (e) =>
-        this.copyOne((e.currentTarget as HTMLButtonElement).dataset.id!)
-      );
     });
-    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}resolve-one`).forEach((btn) => {
-      btn.addEventListener('click', (e) =>
-        this.resolve((e.currentTarget as HTMLButtonElement).dataset.id!)
+    this.#el.querySelectorAll<HTMLButtonElement>(`.${PPT_PREFIX}copy-one`).forEach((button) => {
+      button.addEventListener('click', (e) =>
+        void this.copyOne((e.currentTarget as HTMLButtonElement).dataset.id!)
       );
     });
   }
 
   async #clearActive(): Promise<void> {
-    this.#annotations = this.#resolvedAnnotations();
-    this.#lastResolvedId = null;
+    this.#annotations = this.#annotations.filter((annotation) => annotation.status !== 'active');
     this.#emitAnnotationsChange();
     this.#render();
     await saveAnnotations(window.location.pathname, this.#annotations);
@@ -516,6 +596,10 @@ export class Toolbar {
     }
 
     const key = e.key.toLowerCase();
+    if (key === 'escape') {
+      e.preventDefault();
+      this.#requestMode('active-select');
+    }
     if (key === 'h') {
       e.preventDefault();
       this.#requestMode('active-select');

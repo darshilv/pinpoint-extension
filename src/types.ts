@@ -31,6 +31,8 @@ export interface Annotation {
   status: AnnotationStatus;
   rect?: AnnotationRect;
   createdAt?: number;
+  copiedAt?: number;
+  resolvedBy?: 'copy' | 'manual';
   url?: string;
 }
 
