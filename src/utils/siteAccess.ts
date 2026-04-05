@@ -16,6 +16,6 @@ export function originPatternFromUrl(url: string): string | null {
   }
 }
 
-export function isRequestableSiteUrl(url: string): boolean {
+function isRequestableSiteUrl(url: string): boolean {
   return originPatternFromUrl(url) !== null;
 }

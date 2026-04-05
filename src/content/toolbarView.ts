@@ -9,7 +9,7 @@ export interface HistoryGroup {
   annotations: Annotation[];
 }
 
-export interface ToolbarViewState {
+interface ToolbarViewState {
   active: Annotation[];
   historyGroups: HistoryGroup[];
   historyCount: number;

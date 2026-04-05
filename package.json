@@ -3,6 +3,11 @@
   "version": "1.1.0",
   "description": "Annotate UI elements and generate AI-ready prompts",
   "type": "module",
+  "knip": {
+    "ignoreBinaries": [
+      "python3"
+    ]
+  },
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
@@ -27,7 +32,6 @@
     "@playwright/test": "^1.59.1",
     "@types/chrome": "^0.1.38",
     "@types/node": "^25.5.0",
-    "@vitest/coverage-v8": "^4.1.2",
     "eslint": "^10.1.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",

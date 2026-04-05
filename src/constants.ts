@@ -12,7 +12,6 @@ export const EVENTS = {
 } as const;
 
 // chrome.storage keys
-export const STORAGE_NAMESPACE = 'pinpoint';
 export const SETTINGS_KEY = 'pinpoint:settings';
 
 // Messages between content script and service worker
